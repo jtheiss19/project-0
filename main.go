@@ -165,4 +165,5 @@ func main() {
 	Database := ReadProfiles()
 	Database = GrabDBCol("Names", Database)
 	fmt.Println(DisplayDBAsString(Database))
+
 }
