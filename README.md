@@ -6,8 +6,11 @@ Create a CLI which can create and manage many profiles. These profiles will cont
 ## Road Map
 
 - [x] CLI can handle profiles
+- [x] CLI can read profiles from file
+- [ ] CLI can save profiles to file
 - [ ] CLI can delete profiles
-- [ ] CLI can store Information in profiles
+- [ ] CLI can remove duplicate profiles from file
+- [x] CLI can store Information in profiles
 - [ ] User can create profiles
 - [ ] User can delete profiles
 - [ ] User can input variables to be saved in specific profiles
