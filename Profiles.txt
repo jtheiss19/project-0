@@ -1,3 +1,0 @@
-0000,Names,Ages,Weights
-0001,Joseph Theiss,22.6,224.2
-0002,Jacy Theiss,27.6,203.7

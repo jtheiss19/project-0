@@ -2,82 +2,79 @@
 package database
 
 import (
+	"bufio"
 	"fmt"
-	"io/ioutil"
-	"math"
+	"os"
+	"strconv"
+	"strings"
 )
 
-//ByteToFloat provides functionality to convert a slice of bytes into a float32 using unicode's number for zero(48) as an offset.
-//The tens place is held by the offset var which tracks the position of the decimal point.
-func ByteToFloat(Byte []byte) float32 {
-	var tempval float32 = 0
-	var offset int = 0
-	for i := 0; i < len(Byte); i++ {
-		if string(Byte[i]) == "." {
-			offset = -1
-		} else {
-			tempval = tempval + (float32(Byte[i])-48)*float32(math.Pow10(len(Byte)-i-offset))
-		}
-	}
-	return tempval / float32(math.Pow10(len(Byte)+offset))
+//Database is struct for holding the database and cleaning up code functions that alter the data in the database
+type Database struct {
+	Data [][]string
 }
 
 //ReadDB is a function that reads Profiles.txt in the local folder and pulls all information stored in it into a mass slice of bytes.
 //These byte slices can be used as a sortable field. Returns a database of shape [][][]Byte
-func ReadDB() [][][]byte {
+func ReadDB() *Database {
 
 	// read in the contents of the localfile.data
-	data, err := ioutil.ReadFile("Profiles.txt")
+	data, err := os.Open("Profiles.txt")
 
 	//Error Handling
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	//Var DB is the overall database
-	//Var Line holds the line that is currently being pulled into so that it may be appended into DB
-	//Var Size holds len(data)
-	var DB [][][]byte
-	var Line [][]byte
-	var Size int = len(data)
+	reader := bufio.NewScanner(data)
+	var DB [][]string
 
-	i, k := -1, 0
-	//Loop through Lines
-	for i+1 < Size && k < Size {
-		//Loop through entries in Lines
-		for i < Size && k < Size {
-			//Alternates between two loops which capture the length of the entry by leap frogging l and k over eachother
-			for k = i + 1; k < Size; k++ {
-				if data[k] == '\u002C' || data[k] == '\u000a' {
-					Line = append(Line, data[i+1:k])
-					break
-				}
-			}
-			for i = k + 1; i < Size; i++ {
-				if data[i] == '\u002C' || data[i] == '\u000a' {
-					Line = append(Line, data[k+1:i])
-					break
-				}
-			}
-
-			//Provies a break out of the loop that searches through the line for entries
-			if data[i] == '\u000a' {
-				break
-			}
+	for {
+		if reader.Scan() == false {
+			break
 		}
+		Line := strings.Split(reader.Text(), ",")
 		DB = append(DB, Line)
-		Line = nil
-
 	}
-	return DB
+
+	Database := Database{Data: DB}
+
+	//Try to close file
+	Error := data.Close()
+	//Error Handling
+	if Error != nil {
+		fmt.Println(Error)
+		return &Database
+	}
+
+	return &Database
+}
+
+//SaveDB provides a method to profile in which it's variables can be saved, with alterations, into plain txt document for storage and editing
+func (DB *Database) SaveDB() {
+
+	File, Error := os.OpenFile("access.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 7777)
+	if Error != nil {
+		fmt.Println(Error)
+	}
+
+	w := bufio.NewWriter(File)
+
+	for i := 0; i < len(DB.Data); i++ {
+
+		w.Write([]byte("test"))
+		return
+	}
+	w.Write([]byte("test"))
+	return
 }
 
 //GrabDBCol will search a DB of type [][][]byte and remove all columns except the key column and the column matching the ColTerm arg
-func GrabDBCol(ColTerm string, DB [][][]byte) [][][]byte {
+func (DB *Database) GrabDBCol(ColTerm string) *Database {
 
 	var Col int = 0
-	for i := 0; i < len(DB[0]); i++ {
-		if string(DB[0][i]) == ColTerm {
+	for i := 0; i < len(DB.Data[0]); i++ {
+		if DB.Data[0][i] == ColTerm {
 			Col = i
 			break
 		}
@@ -88,55 +85,47 @@ func GrabDBCol(ColTerm string, DB [][][]byte) [][][]byte {
 		return DB
 	}
 
-	var NewDB [][][]byte
-	var AppendingArray [][]byte
-	for i := 0; i < len(DB); i++ {
-		AppendingArray = append(AppendingArray, DB[i][0])
-		AppendingArray = append(AppendingArray, DB[i][Col])
+	var NewDB [][]string
+	var AppendingArray []string
+	for i := 0; i < len(DB.Data); i++ {
+		AppendingArray = append(AppendingArray, DB.Data[i][0])
+		AppendingArray = append(AppendingArray, DB.Data[i][Col])
 		NewDB = append(NewDB, AppendingArray)
 		AppendingArray = nil
 	}
-	return NewDB
+	NewDatabase := Database{Data: NewDB}
+	return &NewDatabase
 
 }
 
 //GrabDBRow returns a database of type [][][]byte which contains the headers row (ID 0000) and the entirety of the row selected which matches the Key in RowID
-func GrabDBRow(RowID []byte, DB [][][]byte) [][][]byte {
-	IDint := int(ByteToFloat(RowID))
-	var RowData [][][]byte
-	RowData = append(RowData, DB[0])
-	RowData = append(RowData, DB[IDint])
-	return RowData
+func (DB *Database) GrabDBRow(RowID string) *Database {
+
+	var RowData [][]string
+	RowIDint, Error := strconv.ParseInt(RowID, 10, 32)
+	if Error != nil {
+		fmt.Println(Error)
+		return DB
+	}
+
+	RowData = append(RowData, DB.Data[0])
+	RowData = append(RowData, DB.Data[RowIDint])
+
+	NewDatabase := Database{Data: RowData}
+	return &NewDatabase
 }
 
-//GetRowKey
-func GetRowKey(SearchTerm string, DB [][][]byte) []byte {
-	/*
-		for i := 0; i < len(DB[0]); i++ {
-			if string(DB[0][i]) == ColTerm {
-				Col = i
-				break
+//GetRowKey retrieves the key when given the searchterm if found in any column
+func (DB *Database) GetRowKey(SearchTerm string) string {
+
+	var RowID string
+
+	for i := 0; i < len(DB.Data); i++ {
+		for j := 0; j < len(DB.Data[i]); j++ {
+			if DB.Data[i][j] == SearchTerm {
+				RowID = DB.Data[i][0]
 			}
 		}
-	*/
-
-	var test []byte
-	return test
-}
-
-//DisplayDBAsString is a function that converts a database of type [][][]byte to a 2-D slice of strings that allow for easy viewing of the database
-func DisplayDBAsString(DB [][][]byte) [][]string {
-	var NewDB [][]string
-	var NewLine []string
-	var Entry string
-	for i := 0; i < len(DB); i++ {
-		for j := 0; j < len(DB[i]); j++ {
-			Entry = string(DB[i][j])
-			NewLine = append(NewLine, Entry)
-		}
-		NewDB = append(NewDB, NewLine)
-		NewLine = nil
-
 	}
-	return NewDB
+	return RowID
 }
