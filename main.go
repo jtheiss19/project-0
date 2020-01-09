@@ -1,16 +1,29 @@
 package main
 
 import (
-	database "github.com/jtheiss19/project-0/Database"
+	"fmt"
+
+	DB "github.com/jtheiss19/project-0/Database"
 )
 
-//Profile acts as an object which can hold the various internal variables of a profile while loaded when operations are applied.
-type Profile struct {
-	Name string
-	Age  int
+//AddProfile interfaces with the Database class to
+//provide a special way to add data into it. This
+//ensures formating is correct and matches the database
+func AddProfile(DB DB.Database) {
+
+}
+
+//DelProfile interfaces with the Database class to
+//provide a special way to remove data from it. This
+//provides extra functionality in how a profile is removed
+func DelProfile(DB DB.Database) {
+
 }
 
 func main() {
-	Database := database.ReadDB()
+	Database := DB.ReadDB()
+	Database.DelRow(4)
+	fmt.Println(Database.Data)
 	Database.SaveDB()
+
 }

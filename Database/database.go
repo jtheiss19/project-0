@@ -1,21 +1,23 @@
-//Package database Provides database functionality to projects
-package database
+//Package db Provides database functionality to projects
+package db
 
 import (
 	"bufio"
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 )
 
-//Database is struct for holding the database and cleaning up code functions that alter the data in the database
+//Database is struct for holding the database and cleaning up
+//code functions that alter the data in the database
 type Database struct {
-	Data [][]string
+	Data map[int][]string
 }
 
-//ReadDB is a function that reads Profiles.txt in the local folder and pulls all information stored in it into a mass slice of bytes.
-//These byte slices can be used as a sortable field. Returns a database of shape [][][]Byte
+//ReadDB is a function that reads Profiles.txt in the local
+//folder and pulls all information stored in it into a mass
+//slice of bytes. These byte slices can be used as a sortable
+//field. Returns a new database.
 func ReadDB() *Database {
 
 	// read in the contents of the localfile.data
@@ -27,14 +29,14 @@ func ReadDB() *Database {
 	}
 
 	reader := bufio.NewScanner(data)
-	var DB [][]string
+	DB := make(map[int][]string)
 
-	for {
+	for i := 0; i >= 0; i++ {
 		if reader.Scan() == false {
 			break
 		}
 		Line := strings.Split(reader.Text(), ",")
-		DB = append(DB, Line)
+		DB[i] = Line
 	}
 
 	Database := Database{Data: DB}
@@ -50,10 +52,12 @@ func ReadDB() *Database {
 	return &Database
 }
 
-//SaveDB provides a method to profile in which it's variables can be saved, with alterations, into plain txt document for storage and editing
+//SaveDB provides a method in which database's data can be
+//saved, with alterations, into plain txt document for
+//storage and editing
 func (DB *Database) SaveDB() {
 
-	File, Error := os.OpenFile("access.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 7777)
+	File, Error := os.OpenFile("Profiles.txt", os.O_TRUNC|os.O_WRONLY, 7777)
 	if Error != nil {
 		fmt.Println(Error)
 	}
@@ -61,15 +65,26 @@ func (DB *Database) SaveDB() {
 	w := bufio.NewWriter(File)
 
 	for i := 0; i < len(DB.Data); i++ {
-
-		w.Write([]byte("test"))
-		return
+		for j := 0; j < len(DB.Data[i]); j++ {
+			w.WriteString(DB.Data[i][j])
+			if j+1 == len(DB.Data[i]) {
+				break
+			}
+			w.WriteString(",")
+		}
+		if i+1 == len(DB.Data) {
+			break
+		}
+		w.WriteString("\n")
 	}
-	w.Write([]byte("test"))
+
+	w.Flush()
 	return
 }
 
-//GrabDBCol will search a DB of type [][][]byte and remove all columns except the key column and the column matching the ColTerm arg
+//GrabDBCol will search a Database and remove all columns
+//except the key column and the column matching the ColTerm
+//arg and output it as a new database
 func (DB *Database) GrabDBCol(ColTerm string) *Database {
 
 	var Col int = 0
@@ -80,17 +95,12 @@ func (DB *Database) GrabDBCol(ColTerm string) *Database {
 		}
 	}
 
-	if Col == 0 {
-		fmt.Println("Could not find Column of name: " + ColTerm)
-		return DB
-	}
-
-	var NewDB [][]string
+	NewDB := make(map[int][]string)
 	var AppendingArray []string
 	for i := 0; i < len(DB.Data); i++ {
-		AppendingArray = append(AppendingArray, DB.Data[i][0])
 		AppendingArray = append(AppendingArray, DB.Data[i][Col])
-		NewDB = append(NewDB, AppendingArray)
+		fmt.Println(AppendingArray)
+		NewDB[i] = AppendingArray
 		AppendingArray = nil
 	}
 	NewDatabase := Database{Data: NewDB}
@@ -98,34 +108,43 @@ func (DB *Database) GrabDBCol(ColTerm string) *Database {
 
 }
 
-//GrabDBRow returns a database of type [][][]byte which contains the headers row (ID 0000) and the entirety of the row selected which matches the Key in RowID
-func (DB *Database) GrabDBRow(RowID string) *Database {
+//GrabDBRow returns a database which contains the headers
+//row and the entirety of the row selected which matches
+//the Key in RowID
+func (DB *Database) GrabDBRow(RowID int) *Database {
 
-	var RowData [][]string
-	RowIDint, Error := strconv.ParseInt(RowID, 10, 32)
-	if Error != nil {
-		fmt.Println(Error)
-		return DB
-	}
+	RowData := make(map[int][]string)
 
-	RowData = append(RowData, DB.Data[0])
-	RowData = append(RowData, DB.Data[RowIDint])
+	RowData[0] = DB.Data[0]
+	RowData[1] = DB.Data[int(RowID)]
 
 	NewDatabase := Database{Data: RowData}
 	return &NewDatabase
 }
 
-//GetRowKey retrieves the key when given the searchterm if found in any column
-func (DB *Database) GetRowKey(SearchTerm string) string {
+//GetRowKey retrieves the key when given the searchterm
+//if found in any column
+func (DB *Database) GetRowKey(SearchTerm string) int {
 
-	var RowID string
+	var RowID int
 
 	for i := 0; i < len(DB.Data); i++ {
 		for j := 0; j < len(DB.Data[i]); j++ {
 			if DB.Data[i][j] == SearchTerm {
-				RowID = DB.Data[i][0]
+				RowID = i
 			}
 		}
 	}
 	return RowID
+}
+
+//AddRow attaches the Line []string to the end of the
+//Database's Data
+func (DB *Database) AddRow(Line []string) {
+	DB.Data[len(DB.Data)] = Line
+}
+
+//DelRow removes a line at RowID in the Database's Data
+func (DB *Database) DelRow(RowID int) {
+	delete(DB.Data, RowID)
 }
