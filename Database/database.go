@@ -109,15 +109,16 @@ func GrabDBRow(RowID []byte, DB [][][]byte) [][][]byte {
 	return RowData
 }
 
-//
+//GetRowKey
 func GetRowKey(SearchTerm string, DB [][][]byte) []byte {
-
-	for i := 0; i < len(DB[0]); i++ {
-		if string(DB[0][i]) == ColTerm {
-			Col = i
-			break
+	/*
+		for i := 0; i < len(DB[0]); i++ {
+			if string(DB[0][i]) == ColTerm {
+				Col = i
+				break
+			}
 		}
-	}
+	*/
 
 	var test []byte
 	return test
