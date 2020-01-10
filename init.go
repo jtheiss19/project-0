@@ -1,0 +1,40 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+
+	DB "github.com/jtheiss19/project-0/Database"
+)
+
+type Configuration struct {
+	Database string `json:"database"`
+}
+
+//Database is the working database that this program
+//will deal with. It is the main, unaltered database
+//that should be saved when the program exits
+var Database *DB.Database
+var Config = Configuration{}
+
+func init() {
+
+	// read in the contents of the localfile.data
+	File, Error := os.Open("config.json")
+	//Error Handling
+	if Error != nil {
+		fmt.Println(Error)
+		fmt.Println("Could not find file")
+	}
+
+	//Read config file
+	Error = json.NewDecoder(File).Decode(&Config)
+	//Error Handling
+	if Error != nil {
+		fmt.Println(Error)
+		fmt.Println("Could not find file")
+	}
+
+	Database = DB.ReadDB(Config.Database)
+}
