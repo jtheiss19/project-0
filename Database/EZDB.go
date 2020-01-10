@@ -18,10 +18,10 @@ type Database struct {
 //folder and pulls all information stored in it into a mass
 //slice of bytes. These byte slices can be used as a sortable
 //field. Returns a new database.
-func ReadDB() *Database {
+func ReadDB(FileName string) *Database {
 
 	// read in the contents of the localfile.data
-	data, err := os.Open("Profiles.txt")
+	data, err := os.Open(FileName)
 
 	//Error Handling
 	if err != nil {
@@ -55,9 +55,9 @@ func ReadDB() *Database {
 //SaveDB provides a method in which database's data can be
 //saved, with alterations, into plain txt document for
 //storage and editing
-func (DB *Database) SaveDB() {
+func (DB *Database) SaveDB(FileName string) {
 
-	File, Error := os.OpenFile("Profiles.txt", os.O_TRUNC|os.O_WRONLY, 7777)
+	File, Error := os.OpenFile(FileName, os.O_TRUNC|os.O_WRONLY, 7777)
 	if Error != nil {
 		fmt.Println(Error)
 	}

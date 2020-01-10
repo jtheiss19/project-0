@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	DB "github.com/jtheiss19/project-0/Database"
 )
@@ -13,9 +15,29 @@ import (
 //will deal with. It is the main, unaltered database
 //that should be saved when the program exits
 var Database *DB.Database
+var ConfigFile = make(map[string]string)
 
 func init() {
-	Database = DB.ReadDB()
+	// read in the contents of the localfile.data
+	File, Error := os.Open("CONFIG.txt")
+
+	//Error Handling
+	if Error != nil {
+		fmt.Println(Error)
+		fmt.Println("Could not find file")
+	}
+
+	//Read config file
+	reader := bufio.NewScanner(File)
+
+	for i := 0; i >= 0; i++ {
+		if reader.Scan() == false {
+			break
+		}
+		Line := strings.Split(reader.Text(), "=")
+		ConfigFile[Line[0]] = Line[1]
+	}
+	Database = DB.ReadDB(ConfigFile["DATABASE"])
 }
 
 //AddProfile interfaces with the Database class to
@@ -27,7 +49,7 @@ func AddProfile(UserInput []string, DB *DB.Database) {
 		return
 	}
 	DB.AddRow(UserInput)
-	Database.SaveDB()
+	Database.SaveDB(ConfigFile["DATABASE"])
 }
 
 //DelProfile interfaces with the Database class to
@@ -40,7 +62,7 @@ func DelProfile(ProfileID string, DB *DB.Database) {
 		return
 	}
 	DB.DelRow(ID)
-	Database.SaveDB()
+	Database.SaveDB(ConfigFile["DATABASE"])
 }
 
 //OverWriteCol is one method for replacing a single
@@ -76,7 +98,6 @@ func Replace(ID string, NewProfile []string, DB *DB.Database) {
 func main() {
 	Showcmd := flag.NewFlagSet("Show", flag.ExitOnError)
 	ShowSpecify := Showcmd.Bool("s", false, "Toggles wheather a specific row will be showed. Must provide a search term.")
-	Showcmd.Parse(os.Args[2:])
 
 	if len(os.Args) < 2 {
 		return
