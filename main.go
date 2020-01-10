@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"strconv"
@@ -73,6 +74,14 @@ func Replace(ID string, NewProfile []string, DB *DB.Database) {
 }
 
 func main() {
+	Showcmd := flag.NewFlagSet("Show", flag.ExitOnError)
+	var ShowAll bool
+	Showcmd.BoolVar(&ShowAll, "s", false, "Toggles wheather a specific row will be showed. Must provide a search term.")
+	flag.Parse()
+	if len(os.Args) == 1 {
+		return
+	}
+
 	switch os.Args[1] {
 
 	case "Add":
@@ -88,7 +97,16 @@ func main() {
 		Replace(os.Args[2], os.Args[3:], Database)
 
 	case "Show":
-		Key := Database.GetRowKey(os.Args[2])
-		fmt.Println(Database.GrabDBRow(Key))
+		Showcmd.Parse(os.Args[1:])
+		fmt.Println(ShowAll)
+		if ShowAll {
+			fmt.Println(ShowAll)
+			//fmt.Println(Showcmd.Parse(os.Args[2]))
+			fmt.Println(Database.Data)
+		} else {
+			fmt.Println(ShowAll)
+			Key := Database.GetRowKey(os.Args[2])
+			fmt.Println(Database.GrabDBRow(Key))
+		}
 	}
 }

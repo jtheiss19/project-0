@@ -1,5 +1,5 @@
-//Package db Provides database functionality to projects
-package db
+//Package ezdb Provides simple easy database functionality to projects
+package ezdb
 
 import (
 	"bufio"
