@@ -74,13 +74,9 @@ func Replace(ID string, NewProfile []string, DB *DB.Database) {
 }
 
 func main() {
-	Showcmd := flag.NewFlagSet("Show", flag.ExitOnError)
-	var ShowAll bool
-	Showcmd.BoolVar(&ShowAll, "s", false, "Toggles wheather a specific row will be showed. Must provide a search term.")
-	flag.Parse()
-	if len(os.Args) == 1 {
-		return
-	}
+	Showcmd := flag.NewFlagSet("show", flag.ExitOnError)
+	ShowAll := Showcmd.Bool("s", false, "Toggles wheather a specific row will be showed. Must provide a search term.")
+	Showcmd.Parse(os.Args[2:])
 
 	switch os.Args[1] {
 
@@ -96,17 +92,13 @@ func main() {
 	case "Replace":
 		Replace(os.Args[2], os.Args[3:], Database)
 
-	case "Show":
-		Showcmd.Parse(os.Args[1:])
-		fmt.Println(ShowAll)
-		if ShowAll {
-			fmt.Println(ShowAll)
-			//fmt.Println(Showcmd.Parse(os.Args[2]))
-			fmt.Println(Database.Data)
+	case "show":
+		Showcmd.Parse(os.Args[2:])
+		if *ShowAll {
+			fmt.Println(*ShowAll)
 		} else {
-			fmt.Println(ShowAll)
-			Key := Database.GetRowKey(os.Args[2])
-			fmt.Println(Database.GrabDBRow(Key))
+			fmt.Println(*ShowAll)
 		}
+
 	}
 }

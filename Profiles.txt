@@ -1,3 +1,4 @@
 Name, Age, Height
 Joseph, 22, 250
-Teacher, 41, 200
+Jacy, 27, 260
+Aimee, 21, 120
