@@ -8,10 +8,10 @@ Create a CLI which can create and manage many profiles. These profiles will cont
 - [x] CLI can handle profiles
 - [x] CLI can read profiles from file
 - [x] CLI can save profiles to file
-- [ ] CLI can delete profiles
+- [x] CLI can delete profiles
 - [ ] CLI can detect duplicate profiles from file
 - [x] CLI can store Information in profiles
-- [ ] User can create profiles
+- [x] User can create profiles
 - [ ] User can delete profiles
 - [ ] User can input variables to be saved in specific profiles
 - [ ] User can overide information put into a profile in the past

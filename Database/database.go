@@ -99,7 +99,6 @@ func (DB *Database) GrabDBCol(ColTerm string) *Database {
 	var AppendingArray []string
 	for i := 0; i < len(DB.Data); i++ {
 		AppendingArray = append(AppendingArray, DB.Data[i][Col])
-		fmt.Println(AppendingArray)
 		NewDB[i] = AppendingArray
 		AppendingArray = nil
 	}
@@ -144,7 +143,16 @@ func (DB *Database) AddRow(Line []string) {
 	DB.Data[len(DB.Data)] = Line
 }
 
-//DelRow removes a line at RowID in the Database's Data
+//DelRow removes a line at RowID in the Database's Data.
+//Autoshifts the data to fill the spot for a continous
+//indexing system.
 func (DB *Database) DelRow(RowID int) {
-	delete(DB.Data, RowID)
+	if RowID > len(DB.Data)-1 || RowID == 0 {
+		return
+	}
+	for i := RowID; i+1 < len(DB.Data); i++ {
+		DB.Data[i] = DB.Data[i+1]
+	}
+	delete(DB.Data, len(DB.Data)-1)
+
 }
