@@ -78,6 +78,10 @@ func main() {
 	ShowSpecify := Showcmd.Bool("s", false, "Toggles wheather a specific row will be showed. Must provide a search term.")
 	Showcmd.Parse(os.Args[2:])
 
+	if len(os.Args) < 2 {
+		return
+	}
+
 	switch os.Args[1] {
 
 	case "Add":
