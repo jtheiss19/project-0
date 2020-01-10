@@ -42,6 +42,36 @@ func DelProfile(ProfileID string, DB *DB.Database) {
 	Database.SaveDB()
 }
 
+//OverWriteCol is one method for replacing a single
+//data entry in a row.
+func OverWriteCol(ProfileID string, Column string, NewVal string, DB *DB.Database) {
+
+	var Col int = 0
+	for i := 0; i < len(DB.Data[0]); i++ {
+		if DB.Data[0][i] == Column {
+			Col = i
+			break
+		}
+	}
+
+	ID, Error := strconv.Atoi(ProfileID)
+	if Error != nil {
+		fmt.Println(Error)
+		return
+	}
+
+	DB.Data[ID][Col] = NewVal
+
+}
+
+//Replace is one method for replacing data in a row.
+//It works by rebuilding the entire profile.
+func Replace(ID string, NewProfile []string, DB *DB.Database) {
+	DelProfile(ID, DB)
+	AddProfile(NewProfile, DB)
+
+}
+
 func main() {
 	switch os.Args[1] {
 
@@ -50,5 +80,15 @@ func main() {
 
 	case "Del":
 		DelProfile(os.Args[2], Database)
+
+	case "Edit":
+		OverWriteCol(os.Args[2], os.Args[3], os.Args[4], Database)
+
+	case "Replace":
+		Replace(os.Args[2], os.Args[3:], Database)
+
+	case "Show":
+		Key := Database.GetRowKey(os.Args[2])
+		fmt.Println(Database.GrabDBRow(Key))
 	}
 }
