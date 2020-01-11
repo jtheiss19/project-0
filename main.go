@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"os"
 )
 
@@ -49,9 +48,9 @@ func main() {
 		Showcmd.Parse(os.Args[2:])
 		if *ShowSpecify {
 			Key := Database.GetRowKey(os.Args[3])
-			fmt.Println(Database.GrabDBRow(Key))
+			Database.GrabDBRow(Key).PrettyPrint()
 		} else {
-			fmt.Println(Database.Data)
+			Database.PrettyPrint()
 		}
 
 	}
