@@ -12,6 +12,7 @@ import (
 //code functions that alter the data in the database
 type Database struct {
 	Data map[int][]string
+	File string
 }
 
 //ReadDB is a function that reads Profiles.txt in the local
@@ -39,7 +40,7 @@ func ReadDB(FileName string) *Database {
 		DB[i] = Line
 	}
 
-	Database := Database{Data: DB}
+	Database := Database{Data: DB, File: FileName}
 
 	//Try to close file
 	Error := data.Close()

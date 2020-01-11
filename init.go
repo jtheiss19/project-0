@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	DB "github.com/jtheiss19/project-0/Database"
+	EZDB "github.com/jtheiss19/project-0/Database"
 )
 
 //Configuration struct holds the config settings
@@ -17,7 +17,7 @@ type Configuration struct {
 //Database is the working database that this program
 //will deal with. It is the main, unaltered database
 //that should be saved when the program exits
-var Database *DB.Database
+var Database *EZDB.Database
 
 //Config is the one and only iteration of the Configuration
 //struct. It alone holds the sessions configuration settings
@@ -42,5 +42,5 @@ func init() {
 		fmt.Println("Could not find file")
 	}
 
-	Database = DB.ReadDB(Config.Database)
+	Database = EZDB.ReadDB(Config.Database)
 }

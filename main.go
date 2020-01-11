@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"os"
+
+	Functions "github.com/jtheiss19/project-0/Functions"
 )
 
 func main() {
@@ -25,24 +27,24 @@ func main() {
 	case "Add":
 		Addcmd.Parse(os.Args[2:])
 		if *AddCol != "" {
-			NewCol(*AddCol, Database)
+			Functions.NewCol(*AddCol, Database)
 		} else {
-			AddProfile(os.Args[2:], Database)
+			Functions.AddProfile(os.Args[2:], Database)
 		}
 
 	case "Del":
 		Delcmd.Parse(os.Args[2:])
 		if *DelCol != "" {
-			EndCol(*DelCol, Database)
+			Functions.EndCol(*DelCol, Database)
 		} else {
-			DelProfile(os.Args[2], Database)
+			Functions.DelProfile(os.Args[2], Database)
 		}
 
 	case "Edit":
-		OverWriteCol(os.Args[2], os.Args[3], os.Args[4], Database)
+		Functions.OverWriteCol(os.Args[2], os.Args[3], os.Args[4], Database)
 
 	case "Replace":
-		Replace(os.Args[2], os.Args[3:], Database)
+		Functions.Replace(os.Args[2], os.Args[3:], Database)
 
 	case "Show":
 		Showcmd.Parse(os.Args[2:])
