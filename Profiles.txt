@@ -1,4 +1,4 @@
-Name, Age, Height
-Joseph, 22, 250
-Jacy, 27, 260
-Aimee, 21, 120
+Name,Age,Height
+Joseph,22,250
+Jacy,27,260
+Aimee,21,120

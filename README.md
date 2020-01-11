@@ -16,8 +16,7 @@ Create a CLI which can create and manage many profiles. These profiles will cont
 - [x] User can overide information put into a profile in the past
 - [x] User can request information stored in specific profiles
 - [ ] User can request the CLI program generate health information
-- [ ] User can request profile information in catagories (for all information, generated information, manually entered information)
-- [ ] User can request mass information from profiles (e.g all weights, avg weights, std weights, etc)
+- [x] User can request mass information from profiles
 - [ ] User can request mass information from profiles based on profile contents (e.g avg weight of people over age 45)
 - [ ] User can request CLI to draw health based conclusions
 - [ ] User can request CLI to give solutions to improve health

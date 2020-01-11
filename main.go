@@ -11,6 +11,12 @@ func main() {
 	Showcmd := flag.NewFlagSet("Show", flag.ExitOnError)
 	ShowSpecify := Showcmd.Bool("s", false, "Toggles wheather a specific row will be showed. Must provide a search term.")
 
+	Addcmd := flag.NewFlagSet("Add", flag.ExitOnError)
+	AddCol := Addcmd.String("c", "", "Adds a new column to the current selected database")
+
+	Delcmd := flag.NewFlagSet("Del", flag.ExitOnError)
+	DelCol := Delcmd.String("c", "", "Removes a column from the current selected database")
+
 	if len(os.Args) < 2 {
 		return
 	}
@@ -18,10 +24,20 @@ func main() {
 	switch os.Args[1] {
 
 	case "Add":
-		AddProfile(os.Args[2:], Database)
+		Addcmd.Parse(os.Args[2:])
+		if *AddCol != "" {
+			NewCol(*AddCol, Database)
+		} else {
+			AddProfile(os.Args[2:], Database)
+		}
 
 	case "Del":
-		DelProfile(os.Args[2], Database)
+		Delcmd.Parse(os.Args[2:])
+		if *DelCol != "" {
+			EndCol(*DelCol, Database)
+		} else {
+			DelProfile(os.Args[2], Database)
+		}
 
 	case "Edit":
 		OverWriteCol(os.Args[2], os.Args[3], os.Args[4], Database)
@@ -39,4 +55,5 @@ func main() {
 		}
 
 	}
+
 }

@@ -61,3 +61,17 @@ func Replace(ID string, NewProfile []string, DB *DB.Database) {
 	AddProfile(NewProfile, DB)
 
 }
+
+//NewCol adds a new column to the database and then
+//updates all other rows to include none in the column
+func NewCol(NewCol string, DB *DB.Database) {
+	DB.CreateCol(NewCol)
+	DB.SaveDB(Config.Database)
+}
+
+//EndCol adds a new column to the database and then
+//updates all other rows to include none in the column
+func EndCol(DelCol string, DB *DB.Database) {
+	DB.DelCol(DelCol)
+	DB.SaveDB(Config.Database)
+}

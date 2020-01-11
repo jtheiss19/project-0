@@ -156,3 +156,41 @@ func (DB *Database) DelRow(RowID int) {
 	delete(DB.Data, len(DB.Data)-1)
 
 }
+
+//CreateCol adds a new Column to the header. Add
+//"nil" into all other rows section under this
+//new column
+func (DB *Database) CreateCol(NewCol string) {
+	DB.Data[0] = append(DB.Data[0], NewCol)
+
+	for j := 1; j < len(DB.Data); j++ {
+		DB.Data[j] = append(DB.Data[j], "nil")
+	}
+}
+
+//DelCol removes a Column from the header. It also
+//loops through all other rows to remove the value
+//associated with that column
+func (DB *Database) DelCol(DelCol string) {
+
+	var Col int = 0
+	for i := 0; i < len(DB.Data[0]); i++ {
+		if DB.Data[0][i] == DelCol {
+			Col = i
+			break
+		}
+	}
+
+	//Loops through row j
+	for j := 0; j < len(DB.Data); j++ {
+		//Loops through entries starting at Col: the entry being removed
+		for i := Col; i < len(DB.Data[j]); i++ {
+			if i+1 >= len(DB.Data[j]) {
+				break
+			}
+			DB.Data[j][i] = DB.Data[j][i+1]
+		}
+		DB.Data[j] = DB.Data[j][0 : len(DB.Data[j])-1]
+	}
+
+}

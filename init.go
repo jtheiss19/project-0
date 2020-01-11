@@ -8,6 +8,8 @@ import (
 	DB "github.com/jtheiss19/project-0/Database"
 )
 
+//Configuration struct holds the config settings
+//pulled from the config file
 type Configuration struct {
 	Database string `json:"database"`
 }
@@ -16,6 +18,10 @@ type Configuration struct {
 //will deal with. It is the main, unaltered database
 //that should be saved when the program exits
 var Database *DB.Database
+
+//Config is the one and only iteration of the Configuration
+//struct. It alone holds the sessions configuration settings
+//from the config file which is loaded in during init()
 var Config = Configuration{}
 
 func init() {
