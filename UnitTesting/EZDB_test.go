@@ -5,6 +5,6 @@ import (
 	"testing"
 )
 
-func NewTest(test *testing.T) {
+func TestNew(test *testing.T) {
 	fmt.Println("here")
 }

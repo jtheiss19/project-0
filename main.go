@@ -54,7 +54,5 @@ func main() {
 		} else {
 			Database.PrettyPrint()
 		}
-
 	}
-
 }

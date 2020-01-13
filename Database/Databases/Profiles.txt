@@ -1,3 +1,6 @@
-Key,Name,Age,Height
-0001,Joseph,22,250
-0002,Aimee,21,120
+Key,Name,Age,Weight
+1,Joseph,22,220
+2,Aimee,21,120
+3,Brandon,39,200
+4,Joseph,26,150
+5,Mike,38,230

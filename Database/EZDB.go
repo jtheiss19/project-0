@@ -5,6 +5,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -151,9 +152,12 @@ func (DB *Database) DelRow(RowID int) {
 	if RowID > len(DB.Data)-1 || RowID == 0 {
 		return
 	}
+
 	for i := RowID; i+1 < len(DB.Data); i++ {
 		DB.Data[i] = DB.Data[i+1]
+		DB.Data[i][0] = (strconv.Itoa(i))
 	}
+
 	delete(DB.Data, len(DB.Data)-1)
 
 }
