@@ -70,8 +70,8 @@ func NewCol(NewCol string, DB *DB.Database) {
 	DB.SaveDB(DB.File)
 }
 
-//EndCol adds a new column to the database and then
-//updates all other rows to include none in the column
+//EndCol removes a new column to the database and then
+//updates all other rows to remove that column's data
 func EndCol(DelCol string, DB *DB.Database) {
 	DB.DelCol(DelCol)
 	DB.SaveDB(DB.File)
