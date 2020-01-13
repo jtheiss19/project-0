@@ -100,6 +100,7 @@ func (DB *Database) GrabDBCol(ColTerm string) *Database {
 	NewDB := make(map[int][]string)
 	var AppendingArray []string
 	for i := 0; i < len(DB.Data); i++ {
+		AppendingArray = append(AppendingArray, DB.Data[i][0])
 		AppendingArray = append(AppendingArray, DB.Data[i][Col])
 		NewDB[i] = AppendingArray
 		AppendingArray = nil
