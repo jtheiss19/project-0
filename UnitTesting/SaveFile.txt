@@ -1,2 +1,2 @@
-Key,testing1,testing2
-1,testcol1,testcol2
+testing1,testing2
+testcol1,testcol2

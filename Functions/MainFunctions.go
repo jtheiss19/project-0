@@ -76,3 +76,43 @@ func EndCol(DelCol string, DB *DB.Database) {
 	DB.DelCol(DelCol)
 	DB.SaveDB(DB.File)
 }
+
+//CheckColHeader returns a bool based on if the database
+//contains the column. NOT IN UNITTEST
+func CheckColHeader(DB *DB.Database, ColHeader ...string) bool {
+	HeaderSlice := DB.GetHeaders()
+
+	Count := 0
+
+	for i := 0; i < len(HeaderSlice); i++ {
+		for j := 0; j < len(ColHeader); j++ {
+			if HeaderSlice[i] == ColHeader[j] {
+				Count++
+			}
+		}
+	}
+	if Count == len(ColHeader) {
+		return true
+	}
+	return false
+}
+
+//CalculateBMI itterates through each row of a database and
+//calculates the BMI for each row participant if possible. If
+//there is a nil in a required field, returns nil into row
+//NOT IN UNITTEST
+func CalculateBMI(DB *DB.Database) {
+	for i := 1; i < len(DB.Data); i++ {
+		Weight, WError := strconv.ParseFloat(DB.Data[i][DB.GetColKey("Weight")], 32)
+		Height, HError := strconv.ParseFloat(DB.Data[i][DB.GetColKey("Height")], 32)
+		if WError == nil && HError == nil {
+			BMIF := 703 * Weight / (Height * Height)
+			BMI := fmt.Sprintf("%3.1f", BMIF)
+			OverWriteCol(DB.Data[i][0], "BMI", BMI, DB)
+		} else {
+			fmt.Println("Check Database for none parsable stings in float lines: Height and Weight")
+			return
+		}
+	}
+	DB.SaveDB(DB.File)
+}

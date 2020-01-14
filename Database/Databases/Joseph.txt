@@ -1,4 +1,4 @@
-Key, weight
+Key, Weight
 1,232
 2,231
 3,231

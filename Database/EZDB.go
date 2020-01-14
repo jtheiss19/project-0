@@ -32,12 +32,17 @@ func ReadDB(FileName string) *Database {
 
 	reader := bufio.NewScanner(data)
 	DB := make(map[int][]string)
+	var Line []string
 
 	for i := 0; i >= 0; i++ {
 		if reader.Scan() == false {
 			break
 		}
-		Line := strings.Split(reader.Text(), ",")
+		if i == 0 {
+			Line = append([]string{"Key"}, strings.Split(reader.Text(), ",")...)
+		} else {
+			Line = append([]string{strconv.Itoa(i)}, strings.Split(reader.Text(), ",")...)
+		}
 		DB[i] = Line
 	}
 
@@ -67,7 +72,7 @@ func (DB *Database) SaveDB(FileName string) {
 	w := bufio.NewWriter(File)
 
 	for i := 0; i < len(DB.Data); i++ {
-		for j := 0; j < len(DB.Data[i]); j++ {
+		for j := 1; j < len(DB.Data[i]); j++ {
 			w.WriteString(DB.Data[i][j])
 			if j+1 == len(DB.Data[i]) {
 				break
@@ -95,6 +100,11 @@ func (DB *Database) GrabDBCol(ColTerm string) *Database {
 			Col = i
 			break
 		}
+	}
+
+	if Col == 0 {
+		EmptyDatabase := Database{}
+		return &EmptyDatabase
 	}
 
 	NewDB := make(map[int][]string)
@@ -230,4 +240,23 @@ func (DB *Database) PrettyPrint() string {
 		}
 	}
 	return ReturnString
+}
+
+//GetHeaders returns a slice that contains the headers of
+//the database. NOT IN UNITTEST
+func (DB *Database) GetHeaders() []string {
+	return DB.Data[0]
+}
+
+//GetColKey grabs the position the column is in the database
+//to help look ups. NOT IN UNITTEST
+func (DB *Database) GetColKey(ColTerm string) int {
+	Headers := DB.GetHeaders()
+	for i := 0; i < len(Headers); i++ {
+		if Headers[i] == ColTerm {
+			return i
+		}
+	}
+
+	return 0
 }

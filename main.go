@@ -55,5 +55,23 @@ func main() {
 		} else {
 			fmt.Println(Database.PrettyPrint())
 		}
+
+	case "Calc":
+		if Functions.CheckColHeader(Database, "Weight", "Height") {
+			if !Functions.CheckColHeader(Database, "BMI") {
+				Database.CreateCol("BMI")
+			}
+			Functions.CalculateBMI(Database)
+		} else {
+			fmt.Println("Missing Columns to calculate BMI")
+		}
+
+	case "Switch":
+
+	case "New":
+
+	case "Review":
+
+	case "Advice":
 	}
 }
