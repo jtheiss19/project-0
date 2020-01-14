@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 
 	Functions "github.com/jtheiss19/project-0/Functions"
@@ -50,9 +51,9 @@ func main() {
 		Showcmd.Parse(os.Args[2:])
 		if *ShowSpecify {
 			Key := Database.GetRowKey(os.Args[3])
-			Database.GrabDBRow(Key).PrettyPrint()
+			fmt.Println(Database.GrabDBRow(Key).PrettyPrint())
 		} else {
-			Database.PrettyPrint()
+			fmt.Println(Database.PrettyPrint())
 		}
 	}
 }

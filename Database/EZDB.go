@@ -204,27 +204,30 @@ func (DB *Database) DelCol(DelCol string) {
 //PrettyPrint allows the user to print the
 //Data in the database object in a visually
 //pleasing way into the console.
-func (DB *Database) PrettyPrint() {
+func (DB *Database) PrettyPrint() string {
+
+	var ReturnString string
 
 	for i := 0; i < len(DB.Data); i++ {
 
 		for j := 0; j < len(DB.Data[i]); j++ {
 			if j == 0 || i == 0 {
-				fmt.Print(DB.Data[i][j])
+				ReturnString = ReturnString + (DB.Data[i][j])
 			}
 
 			for k := 0; k < 10-len(DB.Data[i][j]); k++ {
-				fmt.Print(" ")
+				ReturnString = ReturnString + (" ")
 			}
 
 			if i != 0 && j != 0 {
-				fmt.Print(DB.Data[i][j])
+				ReturnString = ReturnString + (DB.Data[i][j])
 			}
 
-			fmt.Print(" | ")
+			ReturnString = ReturnString + (" | ")
 			if j == len(DB.Data[i])-1 {
-				fmt.Print("\n")
+				ReturnString = ReturnString + ("\n")
 			}
 		}
 	}
+	return ReturnString
 }
