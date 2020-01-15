@@ -19,6 +19,9 @@ func main() {
 	Delcmd := flag.NewFlagSet("Del", flag.ExitOnError)
 	DelCol := Delcmd.String("c", "", "Removes a column from the current selected database")
 
+	Reviewcmd := flag.NewFlagSet("Review", flag.ExitOnError)
+	ReviewPerson := Reviewcmd.String("p", "", "Looks up the profile by key and reviews health information if available.")
+
 	if len(os.Args) < 2 {
 		return
 	}
@@ -71,7 +74,12 @@ func main() {
 	case "New":
 
 	case "Review":
+		Reviewcmd.Parse(os.Args[2:])
+		if *ReviewPerson != "" {
+			Functions.Review(*ReviewPerson, Database, Config.BMITable)
+		} else {
+			fmt.Println("Need to specify profile")
+		}
 
-	case "Advice":
 	}
 }

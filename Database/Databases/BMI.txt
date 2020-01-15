@@ -1,0 +1,5 @@
+Classification,BMI Min,BMI Max,Weight Min,Weight Max
+Underweight,0,18.5,nil,nil
+Normal,18.5,25,nil,nil
+Overweight,25,30,nil,nil
+Obese,30,40,nil,nil

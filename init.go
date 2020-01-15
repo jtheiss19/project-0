@@ -12,6 +12,7 @@ import (
 //pulled from the config file
 type Configuration struct {
 	Database string `json:"database"`
+	BMITable string `json:"BMITable"`
 }
 
 //Database is the working database that this program

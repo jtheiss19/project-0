@@ -1,3 +1,4 @@
 {
-    "database": "Database/Databases/Profiles.txt"
+    "database": "Database/Databases/Profiles.txt",
+    "BMITable": "Database/Databases/BMI.txt"
 }

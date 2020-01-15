@@ -217,6 +217,7 @@ func (DB *Database) DelCol(DelCol string) {
 func (DB *Database) PrettyPrint() string {
 
 	var ReturnString string
+	var ColumnWidth int = 15
 
 	for i := 0; i < len(DB.Data); i++ {
 
@@ -225,7 +226,7 @@ func (DB *Database) PrettyPrint() string {
 				ReturnString = ReturnString + (DB.Data[i][j])
 			}
 
-			for k := 0; k < 10-len(DB.Data[i][j]); k++ {
+			for k := 0; k < ColumnWidth-len(DB.Data[i][j]); k++ {
 				ReturnString = ReturnString + (" ")
 			}
 
