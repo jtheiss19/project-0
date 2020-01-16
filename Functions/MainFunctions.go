@@ -127,7 +127,9 @@ func Review(ProfileID string, DB *EZDB.Database, BMITable string) {
 
 	NewDB := DB.GrabDBRow(Key)
 	NewDB.DelCol("Key")
-	fmt.Println(NewDB.PrettyPrint())
+	for i := 0; i < len(NewDB.PrettyPrint()); i++ {
+		fmt.Println(NewDB.PrettyPrint()[i])
+	}
 
 	BMIData := EZDB.ReadDB(BMITable)
 	BMIData.DelCol("Key")
@@ -181,5 +183,8 @@ func Review(ProfileID string, DB *EZDB.Database, BMITable string) {
 		fmt.Println("Keep up the good work. Do not let them waste this good health!")
 	}
 	fmt.Println()
-	fmt.Println(BMIData.PrettyPrint())
+
+	for i := 0; i < len(BMIData.PrettyPrint()); i++ {
+		fmt.Println(BMIData.PrettyPrint()[i])
+	}
 }

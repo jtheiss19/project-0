@@ -1,6 +1,4 @@
 Name,Age,Weight,Height,BMI
 Joseph,22,220,72,29.8
 Aimee,21,120,60,23.4
-Brandon,39,200,67,31.3
-Joseph,26,150,59,30.3
-Mike,38,230,68,35.0
+Joseph,29,150,59,30.3

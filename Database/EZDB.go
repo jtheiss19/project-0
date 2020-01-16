@@ -214,8 +214,58 @@ func (DB *Database) DelCol(DelCol string) {
 //PrettyPrint allows the user to print the
 //Data in the database object in a visually
 //pleasing way into the console.
-func (DB *Database) PrettyPrint() string {
+func (DB *Database) PrettyPrint() []string {
 
+	var AppendingString string
+	var StringSlice []string
+	var ColumnWidth int = 15
+
+	for i := 0; i < len(DB.Data); i++ {
+
+		for j := 0; j < len(DB.Data[i]); j++ {
+			if j == 0 || i == 0 {
+				AppendingString = AppendingString + (DB.Data[i][j])
+			}
+
+			for k := 0; k < ColumnWidth-len(DB.Data[i][j]); k++ {
+				AppendingString = AppendingString + (" ")
+			}
+
+			if i != 0 && j != 0 {
+				AppendingString = AppendingString + (DB.Data[i][j])
+			}
+
+			AppendingString = AppendingString + (" | ")
+			if j == len(DB.Data[i])-1 {
+				StringSlice = append(StringSlice, AppendingString)
+				AppendingString = ""
+			}
+		}
+	}
+	return StringSlice
+}
+
+//GetHeaders returns a slice that contains the headers of
+//the database. NOT IN UNITTEST
+func (DB *Database) GetHeaders() []string {
+	return DB.Data[0]
+}
+
+//GetColKey grabs the position the column is in the database
+//to help look ups. NOT IN UNITTEST
+func (DB *Database) GetColKey(ColTerm string) int {
+	Headers := DB.GetHeaders()
+	for i := 0; i < len(Headers); i++ {
+		if Headers[i] == ColTerm {
+			return i
+		}
+	}
+
+	return 0
+}
+
+//PrettyPrintHTML is a temp function until pretty print returns a []string for html to loop through
+func (DB *Database) PrettyPrintHTML() string {
 	var ReturnString string
 	var ColumnWidth int = 15
 
@@ -236,28 +286,9 @@ func (DB *Database) PrettyPrint() string {
 
 			ReturnString = ReturnString + (" | ")
 			if j == len(DB.Data[i])-1 {
-				ReturnString = ReturnString + ("\n")
+				ReturnString = ReturnString + ("<br>")
 			}
 		}
 	}
 	return ReturnString
-}
-
-//GetHeaders returns a slice that contains the headers of
-//the database. NOT IN UNITTEST
-func (DB *Database) GetHeaders() []string {
-	return DB.Data[0]
-}
-
-//GetColKey grabs the position the column is in the database
-//to help look ups. NOT IN UNITTEST
-func (DB *Database) GetColKey(ColTerm string) int {
-	Headers := DB.GetHeaders()
-	for i := 0; i < len(Headers); i++ {
-		if Headers[i] == ColTerm {
-			return i
-		}
-	}
-
-	return 0
 }

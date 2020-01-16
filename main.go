@@ -6,6 +6,7 @@ import (
 	"os"
 
 	Functions "github.com/jtheiss19/project-0/Functions"
+	Server "github.com/jtheiss19/project-0/Server"
 )
 
 func main() {
@@ -54,9 +55,15 @@ func main() {
 		Showcmd.Parse(os.Args[2:])
 		if *ShowSpecify {
 			Key := Database.GetRowKey(os.Args[3])
-			fmt.Println(Database.GrabDBRow(Key).PrettyPrint())
+			Information := (Database.GrabDBRow(Key).PrettyPrint())
+			for i := 0; i < len(Information); i++ {
+				fmt.Println(Information[i])
+			}
 		} else {
-			fmt.Println(Database.PrettyPrint())
+			for i := 0; i < len(Database.PrettyPrint()); i++ {
+				fmt.Println(Database.PrettyPrint()[i])
+			}
+
 		}
 
 	case "Calc":
@@ -81,5 +88,7 @@ func main() {
 			fmt.Println("Need to specify profile")
 		}
 
+	case "Host":
+		Server.StartServer(Database)
 	}
 }
