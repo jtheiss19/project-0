@@ -31,7 +31,6 @@ func PatientHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("Url Param 'key' is missing")
 		return
 	}
-
 	key := keys[0]
 	keyint, _ := strconv.Atoi(key)
 
@@ -52,7 +51,7 @@ func StartServer(DB *EZDB.Database) {
 	http.HandleFunc("/view/", PatientHandler)
 	fmt.Println("Online - Now Listening")
 
-	err := http.ListenAndServe(":9090", nil)
+	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
 		fmt.Println(err)
 	}

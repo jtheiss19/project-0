@@ -3,7 +3,7 @@
 <head>
   <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css"/> <!-- static/styles.css -->
 </head>
-<body>
+<body class= "w3-indigo">
     {{$NameColID := .GetColKey "Name"}}
     {{$Weight := .GetColKey "Weight"}}
     {{$Height := .GetColKey "Height"}}
@@ -11,11 +11,41 @@
     {{$BMI := .GetColKey "BMI"}}
     {{$Patient := index .Data 1}}
     
-
-    <div>
-        <div class= "w3-card-4 w3 w3-center">
-            <h1>{{index $Patient $NameColID}}</h1>
-        </div>
+<div class= "w3-row w3-margin-bottom "><!-- Top Row -->
+    <div class= "w3-third"><pre> </pre></div>
+    <div class= "w3-card-4 w3-third w3-panel w3-border w3-pale-blue">
+        <h1 class="w3-center">{{index $Patient $NameColID}}</h1>
     </div>
-</body>
+</div>
+
+<div class= "w3-row"><!-- 2nd Row -->
+
+    <div class= "w3-col" style="width:3%"><pre> </pre></div>
+
+    <div class= "w3-col w3-card-4 w3-panel w3-border w3-pale-blue" style="width:60%"><!-- Left Side -->
+        <h1>Left Side</h1>
+    </div>
+
+    <div class= "w3-col" style="width:3%"><pre> </pre></div>
+
+    <div class= "w3-col w3-card-4 w3-panel w3-border w3-pale-blue " style="width:30%"><!-- Right Side -->
+        <h3 class="w3-center">Patient</h3>
+        <div class= "w3-col" style="width:10%"><pre> </pre></div>
+        <img src="https://image.flaticon.com/icons/svg/219/219970.svg" alt="Avatar" class= "w3-col" style="width:80%">
+        <h1 class="w3-center">{{index $Patient $NameColID}}</h1>
+    </div>
+
+</div>
+
+<div class= "w3-row w3-margin-top "><!-- 3rd Row -->
+
+    <div class= "w3-col" style="width:10%"><pre> </pre></div>
+
+    <div class= "w3-col w3-card-4 w3-panel w3-border w3-pale-blue" style="width:80%"><!-- Center -->
+        <h1>Left Side</h1>
+    </div>
+
+</div>
+
+</body class= "w3-white">
 </html>
