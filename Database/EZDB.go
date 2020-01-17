@@ -264,31 +264,6 @@ func (DB *Database) GetColKey(ColTerm string) int {
 	return 0
 }
 
-//PrettyPrintHTML is a temp function until pretty print returns a []string for html to loop through
-func (DB *Database) PrettyPrintHTML() string {
-	var ReturnString string
-	var ColumnWidth int = 15
-
-	for i := 0; i < len(DB.Data); i++ {
-
-		for j := 0; j < len(DB.Data[i]); j++ {
-			if j == 0 || i == 0 {
-				ReturnString = ReturnString + (DB.Data[i][j])
-			}
-
-			for k := 0; k < ColumnWidth-len(DB.Data[i][j]); k++ {
-				ReturnString = ReturnString + (" ")
-			}
-
-			if i != 0 && j != 0 {
-				ReturnString = ReturnString + (DB.Data[i][j])
-			}
-
-			ReturnString = ReturnString + (" | ")
-			if j == len(DB.Data[i])-1 {
-				ReturnString = ReturnString + ("<br>")
-			}
-		}
-	}
-	return ReturnString
+func (DB *Database) GetColKey2(t string) int {
+	return 2
 }

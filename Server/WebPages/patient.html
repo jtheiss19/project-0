@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css"/> <!-- static/styles.css -->
+</head>
+<body>
+    {{$NameColID := .GetColKey "Name"}}
+    {{$Weight := .GetColKey "Weight"}}
+    {{$Height := .GetColKey "Height"}}
+    {{$Age := .GetColKey "Age"}}
+    {{$BMI := .GetColKey "BMI"}}
+    {{$Patient := index .Data 1}}
+    
+
+    <div>
+        <div class= "w3-card-4 w3 w3-center">
+            <h1>{{index $Patient $NameColID}}</h1>
+        </div>
+    </div>
+</body>
+</html>

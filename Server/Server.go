@@ -3,7 +3,9 @@ package server
 
 import (
 	"fmt"
+	"log"
 	"net/http"
+	"strconv"
 	"text/template"
 
 	EZDB "github.com/jtheiss19/project-0/Database"
@@ -20,6 +22,25 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	t.Execute(w, Database)
 }
 
+//PatientHandler is for handling a patients profile.
+//It passes the global variable Database for parsing
+//patient.html for pulling data.
+func PatientHandler(w http.ResponseWriter, r *http.Request) {
+	keys, _ := r.URL.Query()["key"]
+	if len(keys[0]) < 1 {
+		log.Println("Url Param 'key' is missing")
+		return
+	}
+
+	key := keys[0]
+	keyint, _ := strconv.Atoi(key)
+
+	PatientData := Database.GrabDBRow(keyint)
+
+	t, _ := template.ParseFiles("Server/WebPages/patient.html")
+	t.Execute(w, PatientData)
+}
+
 //StartServer begins the hosting process for the
 //webserver
 func StartServer(DB *EZDB.Database) {
@@ -28,9 +49,10 @@ func StartServer(DB *EZDB.Database) {
 
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("Server/WebPages"))))
 	http.HandleFunc("/", Handler)
+	http.HandleFunc("/view/", PatientHandler)
 	fmt.Println("Online - Now Listening")
 
-	err := http.ListenAndServe(":8090", nil)
+	err := http.ListenAndServe(":9090", nil)
 	if err != nil {
 		fmt.Println(err)
 	}

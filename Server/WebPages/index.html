@@ -4,18 +4,91 @@
   <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css"/> <!-- static/styles.css -->
 </head>
 <body>
+{{$NameColID := .GetColKey "Name"}}
+{{$Weight := .GetColKey "Weight"}}
+{{$Height := .GetColKey "Height"}}
+{{$Age := .GetColKey "Age"}}
+{{$BMI := .GetColKey "BMI"}}
+{{$Data := .Data}}
 
-<div class="w3 -container w3-orange">
-<pre>{{range .PrettyPrint}}<p class=" w3-orange w3-hover-red">{{.}}</p>{{end}}</pre>
-</div>
+<div class="w3-row">
 
-<div class="w3-container w3-teal">
-  <p>This is a paragraph.</p>
-  <button class="favorite styled"
-          type="button">
-      Add to favorites
-  </button>
-</div>
+  <div class="w3 -container w3-white w3-twothird"> <!-- Left Side -->
+
+    <h1 class="w3-margin-top w3-card-4">Patients in system</h1>
+
+    <input class="w3-input w3-border w3-padding w3-card-4" type="text" placeholder="Search for names.." id="myInput" onkeyup="myFunction()"> <!-- Search Bar -->
+
+    <ul class="w3-ul w3-margin-left w3-card-4" id="myUL"> <!-- User Container -->
+      {{range $key, $value := .Data}}
+        
+        {{if ne 0 $key}} 
+        <li>
+
+          <button onclick="myFunction2({{$key}})" class="w3-btn w3-block w3-black w3-left-align w3-hover-red w3-card-4"> <!-- User Information -->
+            <pre>{{index $value $NameColID}}</pre>
+          </button>
+
+          <div id={{$key}} class="w3-display-container w3-row w3-hide">
+            <div class="w3-quarter">
+              <h2>Age:</h2>
+              <h3>{{index $value $Age}} Years Old</h3>
+            </div>
+            <div class="w3-quarter">
+              <h2>Weight:</h2>
+              <h3>{{index $value $Weight}} lbs.</h3>
+            </div>
+            <div class="w3-quarter">
+              <h2>Height:</h2>
+              <h3>{{index $value $Height}}"</h3>
+            </div>
+            <div class="w3-quarter">
+              <h2>BMI:</h2>
+              <h3>{{index $value $BMI}}</h3>
+            </div>
+            <a href="http://localhost:9090/view/?key={{$key}}"><span class="w3-button w3-display-bottomright"> >> </span></a>
+          </div>
+
+        </li>
+        {{end}}
+      
+      {{end}}
+    </ul>
+
+  </div>
+
+</divclass="w3 -container w3-white">
+<script>
+  function myFunction() {
+    var input, filter, ul, li, a, i;
+
+    input = document.getElementById("myInput");
+    filter = input.value.toUpperCase();
+
+    ul = document.getElementById("myUL");
+    li = ul.getElementsByTagName("li");
+
+    for (i = 0; i < li.length; i++) {
+      txtValue = li[i].textContent || li[i].innerText;
+
+      if (txtValue.toUpperCase().indexOf(filter) > -1) {
+        li[i].style.display = "";
+      } else {
+        li[i].style.display = "none";
+      }
+
+    }
+  }
+
+  function myFunction2(id) {
+    var x = document.getElementById(id);
+    if (x.className.indexOf("w3-show") == -1) {
+      x.className += " w3-show";
+    } else { 
+      x.className = x.className.replace(" w3-show", "");
+    }
+  }
+  </script>
 
 </body>
 </html> 
