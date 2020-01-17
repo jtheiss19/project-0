@@ -31,8 +31,19 @@ func PatientHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("Url Param 'key' is missing")
 		return
 	}
-	key := keys[0]
-	keyint, _ := strconv.Atoi(key)
+	keyint := 0
+	for i := 0; i < len(keys); i++ {
+		key := keys[i]
+		keyint2, _ := strconv.Atoi(key)
+		keyint = keyint + keyint2
+	}
+
+	if keyint >= len(Database.Data) {
+		keyint = len(Database.Data) - 1
+	}
+	if keyint <= 0 {
+		keyint = 1
+	}
 
 	PatientData := Database.GrabDBRow(keyint)
 
@@ -51,7 +62,7 @@ func StartServer(DB *EZDB.Database) {
 	http.HandleFunc("/view/", PatientHandler)
 	fmt.Println("Online - Now Listening")
 
-	err := http.ListenAndServe(":8080", nil)
+	err := http.ListenAndServe(":8081", nil)
 	if err != nil {
 		fmt.Println(err)
 	}

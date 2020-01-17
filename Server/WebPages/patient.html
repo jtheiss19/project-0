@@ -5,25 +5,65 @@
 </head>
 <body class= "w3-indigo">
     {{$NameColID := .GetColKey "Name"}}
+    
     {{$Weight := .GetColKey "Weight"}}
     {{$Height := .GetColKey "Height"}}
     {{$Age := .GetColKey "Age"}}
     {{$BMI := .GetColKey "BMI"}}
     {{$Patient := index .Data 1}}
+    {{$KeyName := index $Patient 0}}
+    {{$Header := index .Data 0}}
+
     
 <div class= "w3-row w3-margin-bottom "><!-- Top Row -->
-    <div class= "w3-third"><pre> </pre></div>
+    <div class= "w3-col" style="width:5%"><pre> </pre></div>
+
+    <a href="http://localhost:8080/">
+        <div class= "w3-col w3-card-4 w3-panel w3-border w3-pale-blue w3-hover-red" style="width:7%">
+            <pre> < Back </pre>
+        </div>
+    </a>
+    
+    <div class= "w3-col" style="width:17%"><pre> </pre></div>
+
+    <a href="http://localhost:8080/view/?key={{$KeyName}}&key=-1">
+        <div class= "w3-col w3-card-4 w3-panel w3-border w3-pale-blue w3-hover-red" style="width:4%">
+            <pre> << </pre>
+        </div>
+    </a>
+
+    <div class= "w3-col" style="width:2%"><pre> </pre></div>
+
     <div class= "w3-card-4 w3-third w3-panel w3-border w3-pale-blue">
         <h1 class="w3-center">{{index $Patient $NameColID}}</h1>
     </div>
+
+    <div class= "w3-col" style="width:2%"><pre> </pre></div>
+
+    <a href="http://localhost:8080/view/?key={{$KeyName}}&key=1">
+        <div class= "w3-col w3-card-4 w3-panel w3-border w3-pale-blue w3-hover-red" style="width:4%">
+            <pre> >> </pre>
+        </div>
+    </a>
+
+    <div class= "w3-col" style="width:5%"><pre> </pre></div>
 </div>
 
 <div class= "w3-row"><!-- 2nd Row -->
 
     <div class= "w3-col" style="width:3%"><pre> </pre></div>
 
-    <div class= "w3-col w3-card-4 w3-panel w3-border w3-pale-blue" style="width:60%"><!-- Left Side -->
-        <h1>Left Side</h1>
+    <div class= "w3-col w3-card-4 w3-panel w3-border w3-pale-blue w3-row" style="width:60%"><!-- Left Side -->
+        {{range $key2, $value2 := $Header}}
+            {{range $key, $value := $Patient}}
+                {{if eq $key $key2}}
+                <div class= "w3-col w3-card-4 w3-panel w3-border w3-margin-left w3-margin-right w3-hover-red" style="width:29.5%">
+                    <h1>{{$value2}}:</h1>
+                    <h1>{{$value}}</h1>
+                </div>
+                {{end}}
+            {{end}}
+        {{end}}
     </div>
 
     <div class= "w3-col" style="width:3%"><pre> </pre></div>
