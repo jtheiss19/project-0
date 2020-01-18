@@ -13,6 +13,7 @@ import (
 type Configuration struct {
 	Database string `json:"database"`
 	BMITable string `json:"BMITable"`
+	Port     string `json:"Port"`
 }
 
 //Database is the working database that this program

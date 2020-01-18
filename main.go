@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"os"
 
 	Functions "github.com/jtheiss19/project-0/Functions"
@@ -22,6 +24,9 @@ func main() {
 
 	Reviewcmd := flag.NewFlagSet("Review", flag.ExitOnError)
 	ReviewPerson := Reviewcmd.String("p", "", "Looks up the profile by key and reviews health information if available.")
+
+	Hostcmd := flag.NewFlagSet("Host", flag.ExitOnError)
+	HostHTML := Hostcmd.Bool("html", false, "Host an html server instead of a client server")
 
 	if len(os.Args) < 2 {
 		return
@@ -77,8 +82,9 @@ func main() {
 		}
 
 	case "Switch":
-
-	case "New":
+		Config.Database = "Database/Databases/" + string(os.Args[2]) + ".txt"
+		SaveFile, _ := json.MarshalIndent(Config, "", "	")
+		_ = ioutil.WriteFile("config.json", SaveFile, 0644)
 
 	case "Review":
 		Reviewcmd.Parse(os.Args[2:])
@@ -89,6 +95,13 @@ func main() {
 		}
 
 	case "Host":
-		Server.StartServer(Database)
+		Hostcmd.Parse(os.Args[2:])
+		if *HostHTML {
+			Server.StartHTMLServer(Database, Config.Port)
+		} else {
+			Server.StartClientServer(Database, Config.Port)
+		}
+
 	}
+
 }

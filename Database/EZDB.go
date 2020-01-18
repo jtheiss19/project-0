@@ -59,47 +59,6 @@ func ReadDB(FileName string) *Database {
 	return &Database
 }
 
-//Switch switches a databases file that it pulls from
-//and saves to.
-func (DB *Database) Switch(FileName string) {
-
-	// read in the contents of the localfile.data
-	data, err := os.Open(FileName)
-
-	//Error Handling
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	reader := bufio.NewScanner(data)
-	DBNew := make(map[int][]string)
-	var Line []string
-
-	for i := 0; i >= 0; i++ {
-		if reader.Scan() == false {
-			break
-		}
-		if i == 0 {
-			Line = append([]string{"Key"}, strings.Split(reader.Text(), ",")...)
-		} else {
-			Line = append([]string{strconv.Itoa(i)}, strings.Split(reader.Text(), ",")...)
-		}
-		DBNew[i] = Line
-	}
-
-	DB = &Database{Data: DBNew, File: FileName}
-
-	//Try to close file
-	Error := data.Close()
-	//Error Handling
-	if Error != nil {
-		fmt.Println(Error)
-		return
-	}
-
-	return
-}
-
 //SaveDB provides a method in which database's data can be
 //saved, with alterations, into plain txt document for
 //storage and editing
