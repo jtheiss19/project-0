@@ -71,6 +71,9 @@ func StartHTMLServer(DB *EZDB.Database, port string) {
 	}
 }
 
+var Power bool = true
+var connections []net.Conn
+
 //StartClientServer begins the hosting process for the
 //client to server application
 func StartClientServer(Database *EZDB.Database, port string) {
@@ -79,70 +82,71 @@ func StartClientServer(Database *EZDB.Database, port string) {
 	ln, _ := net.Listen("tcp", ":"+port)
 
 	fmt.Println("Online - Now Listening On Port: " + port)
-	Power := true
-	Connection := false
+	ConnSignal := make(chan string)
+
 	for Power {
-		fmt.Println("Online - Waiting for connection On Port: " + port)
-		var conn net.Conn
-		var err error
-		for {
-			conn, err = ln.Accept()
-			if err == nil {
-				Connection = true
-				break
-			}
-		}
 
-		fmt.Println("New Connection On Port: " + port)
+		go Session(ln, Database, ConnSignal, port)
+		<-ConnSignal
 
-		for Connection {
+	}
+	for i := 0; i < len(connections); i++ {
+		fmt.Fprintf(connections[i], "END"+string('\u0000'))
+		//fmt.Println(connections[i])
+	}
+}
 
-			message, _ := bufio.NewReader(conn).ReadString('\n')
+func Session(ln net.Listener, Database *EZDB.Database, ConnSignal chan string, port string) {
+	conn, _ := ln.Accept()
+	connections = append(connections, conn)
+	fmt.Println("New Connection On Port: " + port)
+	ConnSignal <- "New Connection"
+	for {
 
-			fmt.Print("Command Received: ", string(message))
+		message, _ := bufio.NewReader(conn).ReadString('\n')
 
-			Command := strings.Split(string(message), " ")
+		fmt.Print("Command Received: ", string(message))
 
-			fmt.Fprintf(conn, string('\n'))
+		Command := strings.Split(string(message), " ")
 
-			switch Command[0] {
+		fmt.Fprintf(conn, string('\n'))
 
-			case "Show":
-				if strings.Contains(string(message), "-s") {
-					Key := Database.GetRowKey(string(Command[2]))
-					Information := (Database.GrabDBRow(Key).PrettyPrint())
-					for i := 0; i < len(Information); i++ {
-						fmt.Fprintf(conn, Information[i]+string('\n'))
-					}
-				} else {
-					for i := 0; i < len(Database.PrettyPrint()); i++ {
-						fmt.Fprintf(conn, Database.PrettyPrint()[i]+string('\n'))
-					}
+		switch Command[0] {
 
+		case "Show":
+			if strings.Contains(string(message), "-s") {
+				Key := Database.GetRowKey(string(Command[2]))
+				Information := (Database.GrabDBRow(Key).PrettyPrint())
+				for i := 0; i < len(Information); i++ {
+					fmt.Fprintf(conn, Information[i]+string('\n'))
+				}
+			} else {
+				for i := 0; i < len(Database.PrettyPrint()); i++ {
+					fmt.Fprintf(conn, Database.PrettyPrint()[i]+string('\n'))
 				}
 
-			case "Disconnect":
-				fmt.Println("Connection Terminated")
-				fmt.Fprintf(conn, "Connection Terminated"+string('\n'))
-				Connection = false
-
-			case "Power":
-				fmt.Println("Connection Terminated - Powering Down")
-				fmt.Fprintf(conn, "Connection Terminated - Powering Down"+string('\n'))
-				Power = false
-				Connection = false
-
-			case "":
-				fmt.Println("Connection Terminated")
-				fmt.Fprintf(conn, "Connection Terminated"+string('\n'))
-				Connection = false
-
-			default:
-				fmt.Println("Could not understand: " + string(message))
-				fmt.Fprintf(conn, "Not Parseable"+string('\n'))
 			}
-			fmt.Fprintf(conn, string('\u0000'))
 
+		case "Disconnect":
+			fmt.Println("Connection Terminated")
+			fmt.Fprintf(conn, "Connection Terminated"+string('\n'))
+			return
+
+		case "Power":
+			fmt.Println("Connection Terminated - Powering Down")
+			Power = false
+			ConnSignal <- "End"
+
+		case "":
+			fmt.Println("Connection Terminated")
+			fmt.Fprintf(conn, "Connection Terminated"+string('\n'))
+			return
+
+		default:
+			fmt.Println("Could not understand: " + string(message))
+			fmt.Fprintf(conn, "Not Parseable"+string('\n'))
 		}
+		fmt.Fprintf(conn, string('\u0000'))
+
 	}
 }
