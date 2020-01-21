@@ -3,7 +3,6 @@ package server
 
 import (
 	"bufio"
-	"flag"
 	"fmt"
 	"log"
 	"net"
@@ -13,7 +12,6 @@ import (
 	"text/template"
 
 	EZDB "github.com/jtheiss19/project-0/Database"
-	Functions "github.com/jtheiss19/project-0/Functions"
 )
 
 //Database global
@@ -78,107 +76,73 @@ func StartHTMLServer(DB *EZDB.Database, port string) {
 func StartClientServer(Database *EZDB.Database, port string) {
 	fmt.Println("Launching server...")
 
-	// listen on all interfaces
 	ln, _ := net.Listen("tcp", ":"+port)
 
 	fmt.Println("Online - Now Listening On Port: " + port)
-
-	// accept connection on port
-	conn, _ := ln.Accept()
-
-	fmt.Println("New Connection On Port: " + port)
-
-	Showcmd := flag.NewFlagSet("Show", flag.ExitOnError)
-	ShowSpecify := Showcmd.Bool("s", false, "Toggles wheather a specific row will be showed. Must provide a search term.")
-
-	Addcmd := flag.NewFlagSet("Add", flag.ExitOnError)
-	AddCol := Addcmd.String("c", "", "Adds a new column to the current selected database")
-
-	Delcmd := flag.NewFlagSet("Del", flag.ExitOnError)
-	DelCol := Delcmd.String("c", "", "Removes a column from the current selected database")
-
-	Reviewcmd := flag.NewFlagSet("Review", flag.ExitOnError)
-	ReviewPerson := Reviewcmd.String("p", "", "Looks up the profile by key and reviews health information if available.")
-	// run loop forever (or until ctrl-c)
-	for {
-		// will listen for message to process ending in newline (\n)
-		message, _ := bufio.NewReader(conn).ReadString('\n')
-		// output message received
-		fmt.Print("Command Received: ", string(message))
-
-		Command := strings.Split(string(message), " ")
-
-		switch Command[0] {
-
-		case "Test":
-			fmt.Fprintf(conn, string(message))
-
-		case "Add":
-			Addcmd.Parse(Command[1:])
-			if *AddCol != "" {
-				Functions.NewCol(*AddCol, Database)
-			} else {
-				Functions.AddProfile(Command[1:], Database)
+	Power := true
+	Connection := false
+	for Power {
+		fmt.Println("Online - Waiting for connection On Port: " + port)
+		var conn net.Conn
+		var err error
+		for {
+			conn, err = ln.Accept()
+			if err == nil {
+				Connection = true
+				break
 			}
-
-		case "Del":
-			Delcmd.Parse(Command[1:])
-			if *DelCol != "" {
-				Functions.EndCol(*DelCol, Database)
-			} else {
-				Functions.DelProfile(Command[1], Database)
-			}
-
-		case "Edit":
-			Functions.OverWriteCol(Command[1], Command[2], Command[3], Database)
-
-		case "Replace":
-			Functions.Replace(Command[1], Command[2:], Database)
-
-		case "Show":
-			Showcmd.Parse(Command)
-			if *ShowSpecify {
-				Key := Database.GetRowKey(Command[2])
-				Information := (Database.GrabDBRow(Key).PrettyPrint())
-				for i := 0; i < len(Information); i++ {
-					fmt.Println(Information[i])
-				}
-			} else {
-				for i := 0; i < len(Database.PrettyPrint()); i++ {
-					fmt.Println(Database.PrettyPrint()[i])
-				}
-
-			}
-
-		case "Calc":
-			if Functions.CheckColHeader(Database, "Weight", "Height") {
-				if !Functions.CheckColHeader(Database, "BMI") {
-					Database.CreateCol("BMI")
-				}
-				Functions.CalculateBMI(Database)
-			} else {
-				fmt.Println("Missing Columns to calculate BMI")
-			}
-
-		case "Switch":
-			Database = EZDB.ReadDB("Database/Databases/" + string(Command[1]) + ".txt")
-
-		case "Review":
-			Reviewcmd.Parse(Command[1:])
-			if *ReviewPerson != "" {
-				Functions.Review(*ReviewPerson, Database, "Database/Databases/BMI.txt")
-			} else {
-				fmt.Println("Need to specify profile")
-			}
-
-		case "Exit":
-			fmt.Println("Connection Terminated")
-			break
-
-		default:
-			fmt.Println("Could not understand: " + string(message))
-			fmt.Fprintf(conn, "Not Parseable"+"\n")
 		}
 
+		fmt.Println("New Connection On Port: " + port)
+
+		for Connection {
+
+			message, _ := bufio.NewReader(conn).ReadString('\n')
+
+			fmt.Print("Command Received: ", string(message))
+
+			Command := strings.Split(string(message), " ")
+
+			fmt.Fprintf(conn, string('\n'))
+
+			switch Command[0] {
+
+			case "Show":
+				if strings.Contains(string(message), "-s") {
+					Key := Database.GetRowKey(string(Command[2]))
+					Information := (Database.GrabDBRow(Key).PrettyPrint())
+					for i := 0; i < len(Information); i++ {
+						fmt.Fprintf(conn, Information[i]+string('\n'))
+					}
+				} else {
+					for i := 0; i < len(Database.PrettyPrint()); i++ {
+						fmt.Fprintf(conn, Database.PrettyPrint()[i]+string('\n'))
+					}
+
+				}
+
+			case "Disconnect":
+				fmt.Println("Connection Terminated")
+				fmt.Fprintf(conn, "Connection Terminated"+string('\n'))
+				Connection = false
+
+			case "Power":
+				fmt.Println("Connection Terminated - Powering Down")
+				fmt.Fprintf(conn, "Connection Terminated - Powering Down"+string('\n'))
+				Power = false
+				Connection = false
+
+			case "":
+				fmt.Println("Connection Terminated")
+				fmt.Fprintf(conn, "Connection Terminated"+string('\n'))
+				Connection = false
+
+			default:
+				fmt.Println("Could not understand: " + string(message))
+				fmt.Fprintf(conn, "Not Parseable"+string('\n'))
+			}
+			fmt.Fprintf(conn, string('\u0000'))
+
+		}
 	}
 }

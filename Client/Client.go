@@ -9,19 +9,29 @@ import (
 
 func main() {
 
-	// connect to this socket
-	conn, _ := net.Dial("tcp", "127.0.0.1:8080")
+	var conn net.Conn
+	var err error
+
 	for {
-		// read in input from stdin
+		conn, err = net.Dial("tcp", "127.0.0.1:8080")
+
+		if err == nil {
+			break
+		}
+	}
+
+	for {
 		reader := bufio.NewReader(os.Stdin)
 		fmt.Print("Command to run: ")
 		text, _ := reader.ReadString('\n')
 
-		// send to socket
 		fmt.Fprintf(conn, text+"\n")
 
-		// listen for reply
-		message, _ := bufio.NewReader(conn).ReadString('\n')
+		if text == "Disconnect \n" || text == "Power \n" {
+			break
+		}
+
+		message, _ := bufio.NewReader(conn).ReadString('\u0000')
 		fmt.Print("Message from server: " + message)
 	}
 }
