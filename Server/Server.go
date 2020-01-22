@@ -7,6 +7,8 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 	"text/template"
@@ -71,6 +73,8 @@ func StartHTMLServer(DB *EZDB.Database, port string) {
 	}
 }
 
+//Power is a control bool to be accessed to shut down the
+//clientserver
 var Power bool = true
 var connections []net.Conn
 
@@ -82,6 +86,8 @@ func StartClientServer(Database *EZDB.Database, port string) {
 	ln, _ := net.Listen("tcp", ":"+port)
 
 	fmt.Println("Online - Now Listening On Port: " + port)
+	fmt.Println()
+
 	ConnSignal := make(chan string)
 
 	for Power {
@@ -90,63 +96,104 @@ func StartClientServer(Database *EZDB.Database, port string) {
 		<-ConnSignal
 
 	}
+	fmt.Println("Shutting Down...")
 	for i := 0; i < len(connections); i++ {
-		fmt.Fprintf(connections[i], "END"+string('\u0000'))
-		//fmt.Println(connections[i])
+		fmt.Fprintf(connections[i], "Server is shutting down, Disconnecting you \n"+string('\u0007')+string('\u0000'))
 	}
+	fmt.Println("Shut Down Signal Sent...Ending")
 }
 
+//Session creates a new seesion listening on a port. This
+//session handles all interactions with the connected
+//client
 func Session(ln net.Listener, Database *EZDB.Database, ConnSignal chan string, port string) {
 	conn, _ := ln.Accept()
 	connections = append(connections, conn)
-	fmt.Println("New Connection On Port: " + port)
-	ConnSignal <- "New Connection"
+
+	host, err := os.Hostname()
+	if err != nil {
+		fmt.Println(err)
+		log.Fatal(err)
+	}
+
+	fmt.Println("New Connection On Port: " + port + " from " + host)
+	fmt.Println()
+	ConnSignal <- "New Connection On Port: " + port + " from " + host
+
+	messages := make(chan []string)
+	go SessionWriter(messages, conn)
+	SessionListener(messages, conn, ConnSignal)
+
+}
+
+//SessionWriter handles all out going and command communication
+//with a client
+func SessionWriter(messages chan []string, conn net.Conn) {
+
+	dir, err := os.Getwd()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	for {
+		commandSlice := <-messages
+		out, err := exec.Command(dir+"/main", commandSlice...).Output()
+		if err != nil {
+			fmt.Println(err)
+			log.Fatal(err)
+		}
+
+		fmt.Fprintf(conn, "%s\n", out)
+
+		fmt.Fprintf(conn, string('\u0000'))
+	}
+}
+
+//SessionListener handles all incoming messages from a client
+//and parses them for commands before passing it to the writer
+func SessionListener(messages chan []string, conn net.Conn, ConnSignal chan string) {
+	host, err := os.Hostname()
+	if err != nil {
+		fmt.Println(err)
+		log.Fatal(err)
+	}
+
 	for {
 
 		message, _ := bufio.NewReader(conn).ReadString('\n')
 
-		fmt.Print("Command Received: ", string(message))
+		command := strings.TrimRight(string(message), " \n")
+		command = strings.TrimSpace(string(message))
+		commandSlice := strings.Split(command, " ")
 
-		Command := strings.Split(string(message), " ")
+		fmt.Print("Raw Text Received From "+host+": ", string(message))
 
-		fmt.Fprintf(conn, string('\n'))
+		if command == "Power" {
+			Power = false
+			ConnSignal <- "Remoted Power Toggled from "
+			return
+		}
 
-		switch Command[0] {
-
-		case "Show":
-			if strings.Contains(string(message), "-s") {
-				Key := Database.GetRowKey(string(Command[2]))
-				Information := (Database.GrabDBRow(Key).PrettyPrint())
-				for i := 0; i < len(Information); i++ {
-					fmt.Fprintf(conn, Information[i]+string('\n'))
+		if command == "Disconnect" {
+			fmt.Fprintf(conn, "Disconnecting you from Server \n"+string('\u0007')+string('\u0000'))
+			for i := 0; i < len(connections); i++ {
+				if connections[i] == conn {
+					connections[i] = connections[len(connections)-1]
+					connections[len(connections)-1] = nil
+					connections = connections[:len(connections)-1]
+					fmt.Println("Connection with " + host + " has ended remotely")
+					fmt.Println()
 				}
-			} else {
-				for i := 0; i < len(Database.PrettyPrint()); i++ {
-					fmt.Fprintf(conn, Database.PrettyPrint()[i]+string('\n'))
-				}
-
 			}
 
-		case "Disconnect":
-			fmt.Println("Connection Terminated")
-			fmt.Fprintf(conn, "Connection Terminated"+string('\n'))
 			return
-
-		case "Power":
-			fmt.Println("Connection Terminated - Powering Down")
-			Power = false
-			ConnSignal <- "End"
-
-		case "":
-			fmt.Println("Connection Terminated")
-			fmt.Fprintf(conn, "Connection Terminated"+string('\n'))
-			return
-
-		default:
-			fmt.Println("Could not understand: " + string(message))
-			fmt.Fprintf(conn, "Not Parseable"+string('\n'))
 		}
-		fmt.Fprintf(conn, string('\u0000'))
+
+		fmt.Println("Command to exectute for "+host+": ", command)
+		fmt.Println()
+
+		messages <- commandSlice
 
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -19,21 +20,25 @@ func main() {
 			break
 		}
 	}
+
 	go Writer(conn)
 	Listener(conn)
+
 }
 
+//Listener listens for a server response
 func Listener(conn net.Conn) {
 	for {
 		message, _ := bufio.NewReader(conn).ReadString('\u0000')
-		if message == "END"+string('\u0000') {
-			fmt.Println("Server Has Shut Down, Ending Connection")
-			break
+		if strings.Contains(message, string('\u0007')) {
+			fmt.Print(message)
+			os.Exit(0)
 		}
 		fmt.Print(message)
 	}
 }
 
+//Writer writes to the server
 func Writer(conn net.Conn) {
 	for {
 		reader := bufio.NewReader(os.Stdin)
