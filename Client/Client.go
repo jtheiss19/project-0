@@ -20,7 +20,8 @@ func main() {
 			break
 		}
 	}
-	fmt.Fprintf(conn, "Client"+"\n")
+	fmt.Println("Made connection on port 8080")
+	conn.Write([]byte("Client"))
 	go Writer(conn)
 	Listener(conn)
 
@@ -29,19 +30,15 @@ func main() {
 //Listener listens for a server response
 func Listener(conn net.Conn) {
 	for {
-		message, _ := bufio.NewReader(conn).ReadString('\n')
+		buf := make([]byte, 2048)
+
+		conn.Read(buf)
+		message := string(buf)
 		if strings.Contains(message, string('\u0007')) {
 			fmt.Print(message)
 			os.Exit(0)
-		}
-
-		if strings.Contains(message, string('\u0000')) {
-			stringArray := strings.Split(message, string('\u0000'))
-			for i := 0; i < len(stringArray); i++ {
-				fmt.Println(stringArray[i])
-			}
 		} else {
-			fmt.Println(message)
+			fmt.Print(message)
 		}
 	}
 }
@@ -50,8 +47,8 @@ func Listener(conn net.Conn) {
 func Writer(conn net.Conn) {
 	for {
 		reader := bufio.NewReader(os.Stdin)
-		text, _ := reader.ReadString('\n')
-
-		fmt.Fprintf(conn, text+"\n")
+		bytes, _ := reader.ReadBytes('\n')
+		bytes = append(bytes[:len(bytes)-1])
+		conn.Write([]byte(bytes))
 	}
 }

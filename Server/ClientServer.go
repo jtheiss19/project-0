@@ -1,7 +1,6 @@
 package server
 
 import (
-	"bufio"
 	"fmt"
 	"log"
 	"net"
@@ -47,15 +46,9 @@ func Session(ln net.Listener, ConnSignal chan string, port string) {
 	conn, _ := ln.Accept()
 	connections = append(connections, conn)
 
-	host, err := os.Hostname()
-	if err != nil {
-		fmt.Println(err)
-		log.Fatal(err)
-	}
-
-	fmt.Println("New Connection On Port: " + port + " from " + host)
+	fmt.Println("New Connection On Port: " + port)
 	fmt.Println()
-	ConnSignal <- "New Connection On Port: " + port + " from " + host
+	ConnSignal <- "New Connection On Port: " + port
 
 	messages := make(chan []string)
 	go SessionWriter(messages, conn)
@@ -77,17 +70,10 @@ func SessionWriter(messages chan []string, conn net.Conn) {
 		commandSlice := <-messages
 		out, err := exec.Command(dir+"/main", commandSlice...).Output()
 		if err != nil {
-			out = []byte("Command is not valid")
+			fmt.Println(err)
+			out = []byte("Command is not valid\n")
 		}
-
-		stringArray := strings.Split(string(out), "\n")
-
-		for i := 0; i < len(stringArray); i++ {
-			fmt.Fprintf(conn, stringArray[i]+string('\u0000'))
-
-		}
-
-		fmt.Fprintf(conn, "\n")
+		conn.Write(out)
 	}
 }
 
@@ -101,26 +87,34 @@ func SessionListener(messages chan []string, conn net.Conn, ConnSignal chan stri
 	}
 
 	for {
+		buf := make([]byte, 1024)
 
-		message, _ := bufio.NewReader(conn).ReadString('\n')
+		conn.Read(buf)
 
-		command := strings.TrimRight(string(message), " \n")
-		command = strings.TrimSpace(string(message))
-		commandSlice := strings.Split(command, " ")
-
-		fmt.Print("Raw Text Received From "+host+": ", string(message))
-		if string(message) == "" {
-			fmt.Println()
-			command = "Disconnect"
+		//CRITICAL: removes null bytes from buffer
+		for i := 0; i < len(buf); i++ {
+			if buf[i] == byte('\u0000') {
+				buf = append(buf[0:i])
+				break
+			}
 		}
 
-		if command == "Power" {
+		command := strings.TrimSpace(string(buf))
+		commandSlice := strings.Split(command, " ")
+
+		fmt.Println("Raw Text Received From "+host+": ", string(buf))
+		if string(buf) == "" {
+			fmt.Println()
+			buf = []byte("Disconnect")
+		}
+
+		if string(buf) == "Power" {
 			Power = false
 			ConnSignal <- "Remoted Power Toggled from "
 			return
 		}
 
-		if command == "Disconnect" {
+		if string(buf) == "Disconnect" {
 			fmt.Fprintf(conn, "Disconnecting you from Server"+string('\u0007')+string("\n"))
 			for i := 0; i < len(connections); i++ {
 				if connections[i] == conn {
@@ -135,7 +129,7 @@ func SessionListener(messages chan []string, conn net.Conn, ConnSignal chan stri
 			return
 		}
 
-		fmt.Println("Command to exectute for "+host+": ", command)
+		fmt.Println("Command to exectute for "+host+": ", commandSlice)
 		fmt.Println()
 
 		messages <- commandSlice

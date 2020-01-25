@@ -51,13 +51,15 @@ func Session(ln net.Listener, ConnSignal chan string, port string) {
 	ConnSignal <- "New Connection"
 
 	//Checking for server to handle the connecting client
-	message, _ := bufio.NewReader(conn).ReadString('\n')
+	buf := make([]byte, 1024)
+	conn.Read(buf)
+
 	var serverConn net.Conn = nil
 	var err error
 	for k, v := range backendServers {
-		if strings.Contains(string(message), k) {
+		if strings.Contains(string(buf), k) {
 			serverConn, err = net.Dial("tcp", v)
-
+			serverConn.Write(buf)
 			if err != nil {
 				fmt.Fprintf(conn, "Server could not find correct route")
 				fmt.Fprintf(conn, "No accepting servers"+"\n")
@@ -71,7 +73,6 @@ func Session(ln net.Listener, ConnSignal chan string, port string) {
 	go SessionWriter(conn, OutboundMessages)
 	go SessionWriter(serverConn, InboundMessages)
 	go SessionListener(serverConn, OutboundMessages)
-	fmt.Fprintf(serverConn, message)
 	SessionListener(conn, InboundMessages)
 
 }
@@ -79,8 +80,10 @@ func Session(ln net.Listener, ConnSignal chan string, port string) {
 //SessionListener listens for connections noise and sends it to the writer
 func SessionListener(Conn1 net.Conn, messages chan string) {
 	for {
-		message, _ := bufio.NewReader(Conn1).ReadString('\n')
-		messages <- (message)
+		buf := make([]byte, 1024)
+		Conn1.Read(buf)
+		fmt.Println(string(buf))
+		messages <- string(buf)
 	}
 
 }
@@ -89,7 +92,7 @@ func SessionListener(Conn1 net.Conn, messages chan string) {
 func SessionWriter(Conn1 net.Conn, messages chan string) {
 	for {
 		NewMessage := <-messages
-		fmt.Fprintf(Conn1, string(NewMessage))
+		Conn1.Write([]byte(NewMessage))
 	}
 }
 
