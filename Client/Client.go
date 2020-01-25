@@ -20,7 +20,7 @@ func main() {
 			break
 		}
 	}
-
+	fmt.Fprintf(conn, "Client"+"\n")
 	go Writer(conn)
 	Listener(conn)
 
@@ -29,12 +29,20 @@ func main() {
 //Listener listens for a server response
 func Listener(conn net.Conn) {
 	for {
-		message, _ := bufio.NewReader(conn).ReadString('\u0000')
+		message, _ := bufio.NewReader(conn).ReadString('\n')
 		if strings.Contains(message, string('\u0007')) {
 			fmt.Print(message)
 			os.Exit(0)
 		}
-		fmt.Print(message)
+
+		if strings.Contains(message, string('\u0000')) {
+			stringArray := strings.Split(message, string('\u0000'))
+			for i := 0; i < len(stringArray); i++ {
+				fmt.Println(stringArray[i])
+			}
+		} else {
+			fmt.Println(message)
+		}
 	}
 }
 

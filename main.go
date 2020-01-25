@@ -99,7 +99,7 @@ func main() {
 		if *HostHTML {
 			Server.StartHTMLServer(Database, Config.Port)
 		} else {
-			Server.StartClientServer(Database, Config.Port)
+			Server.StartClientServer(Config.Port)
 		}
 
 	}
