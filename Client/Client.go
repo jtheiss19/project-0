@@ -20,6 +20,7 @@ func main() {
 			break
 		}
 	}
+	defer conn.Close()
 	fmt.Println("Made connection on port 8080")
 	conn.Write([]byte("Client"))
 	go Writer(conn)

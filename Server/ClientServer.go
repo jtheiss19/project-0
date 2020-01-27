@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 )
 
 //Power is a control bool to be accessed to shut down the
@@ -33,8 +34,9 @@ func StartClientServer(port string) {
 
 	}
 	fmt.Println("Shutting Down...")
+
 	for i := 0; i < len(connections); i++ {
-		fmt.Fprintf(connections[i], "Server is shutting down, Disconnecting you"+string('\u0007')+"\n")
+		connections[i].Write([]byte("Server is shutting down, Disconnecting you" + string('\u0007') + "\n"))
 	}
 	fmt.Println("Shut Down Signal Sent...Ending")
 }
@@ -44,6 +46,7 @@ func StartClientServer(port string) {
 //client
 func Session(ln net.Listener, ConnSignal chan string, port string) {
 	conn, _ := ln.Accept()
+	defer conn.Close()
 	connections = append(connections, conn)
 
 	fmt.Println("New Connection On Port: " + port)
@@ -89,7 +92,13 @@ func SessionListener(messages chan []string, conn net.Conn, ConnSignal chan stri
 	for {
 		buf := make([]byte, 1024)
 
-		conn.Read(buf)
+		conn.SetReadDeadline(time.Now().Add(30 * time.Second))
+		_, err := conn.Read(buf)
+		if err != nil {
+			fmt.Println(err)
+			conn.Write([]byte("Timeout Error, No Signal. Disconnecting. \n" + string('\u0007')))
+			break
+		}
 
 		//CRITICAL: removes null bytes from buffer
 		for i := 0; i < len(buf); i++ {
@@ -103,6 +112,7 @@ func SessionListener(messages chan []string, conn net.Conn, ConnSignal chan stri
 		commandSlice := strings.Split(command, " ")
 
 		fmt.Println("Raw Text Received From "+host+": ", string(buf))
+
 		if string(buf) == "" {
 			fmt.Println()
 			buf = []byte("Disconnect")
@@ -110,21 +120,14 @@ func SessionListener(messages chan []string, conn net.Conn, ConnSignal chan stri
 
 		if string(buf) == "Power" {
 			Power = false
+			conn.Write([]byte("Server is shutting down. Disconnecting you \n" + string('\u0007')))
 			ConnSignal <- "Remoted Power Toggled from "
 			return
 		}
 
 		if string(buf) == "Disconnect" {
-			fmt.Fprintf(conn, "Disconnecting you from Server"+string('\u0007')+string("\n"))
-			for i := 0; i < len(connections); i++ {
-				if connections[i] == conn {
-					connections[i] = connections[len(connections)-1]
-					connections[len(connections)-1] = nil
-					connections = connections[:len(connections)-1]
-					fmt.Println("Connection with " + host + " has ended remotely")
-					fmt.Println()
-				}
-			}
+			conn.Write([]byte("Disconnecting you from Server \n" + string('\u0007') + string("\n")))
+			conn.Close()
 
 			return
 		}
