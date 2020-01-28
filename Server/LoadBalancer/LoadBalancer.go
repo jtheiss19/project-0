@@ -78,6 +78,7 @@ func Session(ln net.Listener, ConnSignal chan string, port string) {
 			serverConn.Write(buf)
 			if err != nil {
 			}
+			connectionsPerServer[k]++
 			break
 		}
 	}
