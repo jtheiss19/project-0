@@ -18,7 +18,7 @@ var connections []net.Conn
 //StartClientServer begins the hosting process for the
 //client to server application
 func StartClientServer(port string) {
-	fmt.Println("Launching server...")
+	fmt.Println("Launching Client server...")
 
 	ln, _ := net.Listen("tcp", ":"+port)
 
@@ -55,6 +55,7 @@ func Session(ln net.Listener, ConnSignal chan string, port string) {
 
 	messages := make(chan []string)
 	go SessionWriter(messages, conn)
+	go Ping(conn)
 	SessionListener(messages, conn, ConnSignal)
 
 }
@@ -113,19 +114,21 @@ func SessionListener(messages chan []string, conn net.Conn, ConnSignal chan stri
 
 		fmt.Println("Raw Text Received From "+host+": ", string(buf))
 
-		if string(buf) == "" {
+		switch string(buf) {
+
+		case "ping":
+
+		case "":
 			fmt.Println()
 			buf = []byte("Disconnect")
-		}
 
-		if string(buf) == "Power" {
+		case "Power":
 			Power = false
 			conn.Write([]byte("Server is shutting down. Disconnecting you \n" + string('\u0007')))
 			ConnSignal <- "Remoted Power Toggled from "
 			return
-		}
 
-		if string(buf) == "Disconnect" {
+		case "Disconnect":
 			conn.Write([]byte("Disconnecting you from Server \n" + string('\u0007') + string("\n")))
 			conn.Close()
 
@@ -137,5 +140,13 @@ func SessionListener(messages chan []string, conn net.Conn, ConnSignal chan stri
 
 		messages <- commandSlice
 
+	}
+}
+
+//Ping pings the connection
+func Ping(conn net.Conn) {
+	for {
+		conn.Write([]byte("ping\n"))
+		time.Sleep(20 * time.Second)
 	}
 }

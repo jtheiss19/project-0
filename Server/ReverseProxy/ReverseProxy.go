@@ -17,7 +17,7 @@ var shutdownchan chan string
 
 func main() {
 
-	go StartReverseProxy("8080")
+	go StartReverseProxy("8081")
 
 	go GrabServers()
 	<-shutdownchan
@@ -26,7 +26,7 @@ func main() {
 //StartReverseProxy begins the hosting process for the
 //client to server application
 func StartReverseProxy(port string) {
-	fmt.Println("Launching server...")
+	fmt.Println("Launching Reverse Proxy server...")
 
 	ln, _ := net.Listen("tcp", ":"+port)
 
@@ -91,9 +91,19 @@ func SessionListener(Conn1 net.Conn, messages chan string) {
 		_, err := Conn1.Read(buf)
 		if err != nil {
 			fmt.Println(err)
+			Conn1.Write([]byte("Timeout Error, No Signal. Disconnecting. \n"))
 			break
 		}
-		messages <- string(buf)
+		for i := 0; i < len(buf); i++ {
+			if buf[i] == byte('\u0000') {
+				buf = append(buf[0:i])
+				break
+			}
+		}
+		if string(buf) == "ping" {
+		} else {
+			messages <- string(buf)
+		}
 	}
 }
 

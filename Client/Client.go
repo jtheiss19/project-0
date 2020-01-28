@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"strings"
+	"time"
 )
 
 func main() {
@@ -14,7 +15,7 @@ func main() {
 	var err error
 
 	for {
-		conn, err = net.Dial("tcp", "127.0.0.1:8080")
+		conn, err = net.Dial("tcp", "127.0.0.1:8081")
 
 		if err == nil {
 			break
@@ -24,6 +25,7 @@ func main() {
 	fmt.Println("Made connection on port 8080")
 	conn.Write([]byte("Client"))
 	go Writer(conn)
+	go Ping(conn)
 	Listener(conn)
 
 }
@@ -33,7 +35,13 @@ func Listener(conn net.Conn) {
 	for {
 		buf := make([]byte, 2048)
 
-		conn.Read(buf)
+		conn.SetReadDeadline(time.Now().Add(30 * time.Second))
+		_, err := conn.Read(buf)
+		if err != nil {
+			fmt.Println(err)
+			conn.Write([]byte("Timeout Error, No Signal. Disconnecting."))
+			break
+		}
 		message := string(buf)
 		if strings.Contains(message, string('\u0007')) {
 			fmt.Print(message)
@@ -51,5 +59,13 @@ func Writer(conn net.Conn) {
 		bytes, _ := reader.ReadBytes('\n')
 		bytes = append(bytes[:len(bytes)-1])
 		conn.Write([]byte(bytes))
+	}
+}
+
+//Ping pings the connection
+func Ping(conn net.Conn) {
+	for {
+		conn.Write([]byte("ping\n"))
+		time.Sleep(20 * time.Second)
 	}
 }

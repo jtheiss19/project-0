@@ -7,6 +7,7 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"time"
 )
 
 //Power is a control bool to be accessed to shut down the
@@ -17,7 +18,7 @@ var shutdownchan chan string
 
 func main() {
 
-	go StartLoadBalancer("8080")
+	go StartLoadBalancer("8082")
 
 	go GrabServers()
 	<-shutdownchan
@@ -28,7 +29,7 @@ func main() {
 //for the same type of server and routes messages to the
 //least used server
 func StartLoadBalancer(port string) {
-	fmt.Println("Launching server...")
+	fmt.Println("Launching Load Balancing server...")
 
 	ln, _ := net.Listen("tcp", ":"+port)
 
@@ -45,6 +46,8 @@ func StartLoadBalancer(port string) {
 	}
 	fmt.Println("Shut Down Signal Sent...Ending")
 }
+
+var shutDownSession chan string = make(chan string)
 
 //Session creates a new seesion listening on a port. This
 //session handles all interactions with the connected
@@ -75,6 +78,7 @@ func Session(ln net.Listener, ConnSignal chan string, port string) {
 			serverConn.Write(buf)
 			if err != nil {
 			}
+			break
 		}
 	}
 
@@ -84,16 +88,29 @@ func Session(ln net.Listener, ConnSignal chan string, port string) {
 	go SessionWriter(serverConn, InboundMessages)
 	go SessionListener(serverConn, OutboundMessages)
 	SessionListener(conn, InboundMessages)
-
 }
 
 //SessionListener listens for connections noise and sends it to the writer
 func SessionListener(Conn1 net.Conn, messages chan string) {
 	for {
 		buf := make([]byte, 1024)
-		Conn1.Read(buf)
-		fmt.Println(string(buf))
-		messages <- string(buf)
+		Conn1.SetReadDeadline(time.Now().Add(30 * time.Second))
+		_, err := Conn1.Read(buf)
+		if err != nil {
+			fmt.Println(err)
+			Conn1.Write([]byte("Timeout Error, No Signal. Disconnecting. \n"))
+			break
+		}
+		for i := 0; i < len(buf); i++ {
+			if buf[i] == byte('\u0000') {
+				buf = append(buf[0:i])
+				break
+			}
+		}
+		if string(buf) == "ping" {
+		} else {
+			messages <- string(buf)
+		}
 	}
 
 }
@@ -125,6 +142,8 @@ func GrabServers() {
 			conn := text
 
 			connectionsPerServer[conn] = 0
+			fmt.Println("Added")
+
 		case "distribute":
 			ForceDistribution()
 		}
