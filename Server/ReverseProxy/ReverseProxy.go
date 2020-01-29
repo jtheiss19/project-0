@@ -14,8 +14,14 @@ import (
 var Power bool = true
 var backendServers map[string]string = make(map[string]string)
 var shutdownchan chan string
+var logfile *os.File
 
 func main() {
+	var err error
+	logfile, err = os.OpenFile("log.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0777)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	go StartReverseProxy("8081")
 
@@ -27,10 +33,13 @@ func main() {
 //client to server application
 func StartReverseProxy(port string) {
 	fmt.Println("Launching Reverse Proxy server...")
+	logfile.Write([]byte("Launching Reverse Proxy server...\n"))
 
 	ln, _ := net.Listen("tcp", ":"+port)
 
 	fmt.Println("Online - Now Listening On Port: " + port)
+	logfile.Write([]byte("Online - Now Listening On Port: " + port + "\n"))
+
 	fmt.Println()
 
 	ConnSignal := make(chan string)
@@ -38,10 +47,12 @@ func StartReverseProxy(port string) {
 	for Power {
 
 		go Session(ln, ConnSignal, port)
-		<-ConnSignal
+		logfile.Write([]byte(<-ConnSignal))
 
 	}
-	fmt.Println("Shut Down Signal Sent...Ending")
+
+	logfile.Write([]byte("Shut Down Signal Sent...Ending \n"))
+
 }
 
 //Session creates a new seesion listening on a port. This
@@ -50,7 +61,7 @@ func StartReverseProxy(port string) {
 func Session(ln net.Listener, ConnSignal chan string, port string) {
 	conn, _ := ln.Accept()
 	defer conn.Close()
-	ConnSignal <- "New Connection"
+	ConnSignal <- "New Connection\n"
 
 	//Checking for server to handle the connecting client
 	buf := make([]byte, 1024)
@@ -80,7 +91,6 @@ func Session(ln net.Listener, ConnSignal chan string, port string) {
 	go SessionWriter(serverConn, InboundMessages)
 	go SessionListener(serverConn, OutboundMessages)
 	SessionListener(conn, InboundMessages)
-
 }
 
 //SessionListener listens for connections noise and sends it to the writer
@@ -92,18 +102,20 @@ func SessionListener(Conn1 net.Conn, messages chan string) {
 		if err != nil {
 			fmt.Println(err)
 			Conn1.Write([]byte("Timeout Error, No Signal. Disconnecting. \n"))
+			logfile.Write([]byte("Timeout Error, No Signal. Disconnecting. \n"))
 			break
 		}
+
+		var temp []byte
 		for i := 0; i < len(buf); i++ {
 			if buf[i] == byte('\u0000') {
-				buf = append(buf[0:i])
+				temp = append(buf[0:i])
 				break
 			}
 		}
-		if string(buf) == "ping" {
-		} else {
-			messages <- string(buf)
-		}
+		logfile.Write([]byte("Recieved message: " + string(temp) + "\n"))
+
+		messages <- string(buf)
 	}
 }
 
@@ -111,6 +123,7 @@ func SessionListener(Conn1 net.Conn, messages chan string) {
 func SessionWriter(Conn1 net.Conn, messages chan string) {
 	for {
 		NewMessage := <-messages
+		logfile.Write([]byte("Sent message: " + NewMessage + "\n"))
 		Conn1.Write([]byte(NewMessage))
 	}
 }
@@ -118,24 +131,32 @@ func SessionWriter(Conn1 net.Conn, messages chan string) {
 //GrabServers allows user to add servers to list
 func GrabServers() {
 	for {
-		fmt.Println("Grab Servers By Entering in a full address such as Host:Port")
-
 		reader := bufio.NewReader(os.Stdin)
 		text, _ := reader.ReadString('\n')
 		text = strings.TrimRight(string(text), " \n")
 		text = strings.TrimSpace(string(text))
-		conn := text
 
-		fmt.Println("What will the server be identified by?")
+		switch text {
+		case "add":
+			fmt.Println("Grab Servers By Entering in a full address such as Host:Port")
 
-		reader = bufio.NewReader(os.Stdin)
-		text, _ = reader.ReadString('\n')
-		text = strings.TrimRight(string(text), " \n")
-		text = strings.TrimSpace(string(text))
+			reader := bufio.NewReader(os.Stdin)
+			text, _ := reader.ReadString('\n')
+			text = strings.TrimRight(string(text), " \n")
+			text = strings.TrimSpace(string(text))
+			conn := text
 
-		servertype := text
+			fmt.Println("What will the server be identified by?")
 
-		backendServers[servertype] = conn
+			reader = bufio.NewReader(os.Stdin)
+			text, _ = reader.ReadString('\n')
+			text = strings.TrimRight(string(text), " \n")
+			text = strings.TrimSpace(string(text))
+
+			servertype := text
+
+			backendServers[servertype] = conn
+		}
 	}
 
 }

@@ -15,8 +15,14 @@ import (
 var Power bool = true
 var connectionsPerServer map[string]int = make(map[string]int)
 var shutdownchan chan string
+var logfile *os.File
 
 func main() {
+	var err error
+	logfile, err = os.OpenFile("log.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0777)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	go StartLoadBalancer("8082")
 
@@ -30,10 +36,12 @@ func main() {
 //least used server
 func StartLoadBalancer(port string) {
 	fmt.Println("Launching Load Balancing server...")
+	logfile.Write([]byte("Launching Load Balancing server...\n"))
 
 	ln, _ := net.Listen("tcp", ":"+port)
 
 	fmt.Println("Online - Now Listening On Port: " + port)
+	logfile.Write([]byte("Online - Now Listening On Port: " + port + "\n"))
 	fmt.Println()
 
 	ConnSignal := make(chan string)
@@ -41,10 +49,11 @@ func StartLoadBalancer(port string) {
 	for Power {
 
 		go Session(ln, ConnSignal, port)
-		<-ConnSignal
+		logfile.Write([]byte(<-ConnSignal))
 
 	}
 	fmt.Println("Shut Down Signal Sent...Ending")
+	logfile.Write([]byte("Shut Down Signal Sent...Ending" + "\n"))
 }
 
 var shutDownSession chan string = make(chan string)
@@ -55,7 +64,7 @@ var shutDownSession chan string = make(chan string)
 func Session(ln net.Listener, ConnSignal chan string, port string) {
 	conn, _ := ln.Accept()
 	defer conn.Close()
-	ConnSignal <- "New Connection"
+	ConnSignal <- "New Connection\n"
 
 	//Checking for server to handle the connecting client
 	buf := make([]byte, 1024)
@@ -75,7 +84,10 @@ func Session(ln net.Listener, ConnSignal chan string, port string) {
 	for k, v := range connectionsPerServer {
 		if valueToLookfor == v {
 			serverConn, err = net.Dial("tcp", k)
+			defer serverConn.Close()
 			serverConn.Write(buf)
+			logfile.Write([]byte("Connection Between I/O made\n"))
+			logfile.Write([]byte("Message Sent: " + string(buf) + "\n"))
 			if err != nil {
 			}
 			connectionsPerServer[k]++
@@ -100,18 +112,20 @@ func SessionListener(Conn1 net.Conn, messages chan string) {
 		if err != nil {
 			fmt.Println(err)
 			Conn1.Write([]byte("Timeout Error, No Signal. Disconnecting. \n"))
+			logfile.Write([]byte("Timeout Error, No Signal. Disconnecting. \n"))
 			break
 		}
+		var temp []byte
 		for i := 0; i < len(buf); i++ {
 			if buf[i] == byte('\u0000') {
-				buf = append(buf[0:i])
+				temp = append(buf[0:i])
 				break
 			}
 		}
-		if string(buf) == "ping" {
-		} else {
-			messages <- string(buf)
-		}
+		logfile.Write([]byte("Recieved message: " + string(temp) + "\n"))
+
+		messages <- string(buf)
+
 	}
 
 }
@@ -120,6 +134,7 @@ func SessionListener(Conn1 net.Conn, messages chan string) {
 func SessionWriter(Conn1 net.Conn, messages chan string) {
 	for {
 		NewMessage := <-messages
+		logfile.Write([]byte("Sent message: " + NewMessage + "\n"))
 		Conn1.Write([]byte(NewMessage))
 	}
 }
