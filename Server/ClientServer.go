@@ -2,11 +2,11 @@ package server
 
 import (
 	"fmt"
-	"log"
 	"net"
 	"os"
 	"os/exec"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -26,12 +26,12 @@ func StartClientServer(port string) {
 	}
 
 	fmt.Println("Launching Client server...")
-	logfile.Write([]byte("Launching Client server...\n"))
+	Write([]byte("Launching Client server..."), "N/A", "N/A", port)
 
 	ln, _ := net.Listen("tcp", ":"+port)
 
 	fmt.Println("Online - Now Listening On Port: " + port)
-	logfile.Write([]byte("Online - Now Listening On Port: " + port + "\n"))
+	Write([]byte("Online - Now Listening On Port: "+port), "N/A", "N/A", port)
 
 	fmt.Println()
 
@@ -40,16 +40,16 @@ func StartClientServer(port string) {
 	for Power {
 
 		go Session(ln, ConnSignal, port)
-		logfile.Write([]byte(<-ConnSignal))
+		<-ConnSignal
 
 	}
 	fmt.Println("Shutting Down...")
-	logfile.Write([]byte("Shutting Down...\n"))
+	Write([]byte("Shutting Down..."), "N/A", "N/A", port)
 
 	for i := 0; i < len(connections); i++ {
 		connections[i].Write([]byte("Server is shutting down, Disconnecting you" + string('\u0007') + "\n"))
 	}
-	logfile.Write([]byte("Shut Down Signal Sent...Ending"))
+	Write([]byte("Shut Down Signal Sent...Ending"), "N/A", "N/A", port)
 }
 
 //Session creates a new seesion listening on a port. This
@@ -60,9 +60,9 @@ func Session(ln net.Listener, ConnSignal chan string, port string) {
 	defer conn.Close()
 	connections = append(connections, conn)
 
-	fmt.Println("New Connection On Port: " + port)
-	fmt.Println()
-	ConnSignal <- "New Connection On Port: " + port + "\n"
+	fmt.Println("New Connection On")
+	Write([]byte("New Connection"), conn.LocalAddr().String(), "N/A", conn.LocalAddr().String())
+	ConnSignal <- "New Connection"
 
 	messages := make(chan []string)
 	go SessionWriter(messages, conn)
@@ -88,7 +88,7 @@ func SessionWriter(messages chan []string, conn net.Conn) {
 			fmt.Println(err)
 			out = []byte("Command is not valid\n")
 		}
-		logfile.Write([]byte("Sending Command: " + string(out) + "\n"))
+		Write([]byte(out), conn.LocalAddr().String(), conn.RemoteAddr().String(), conn.LocalAddr().String())
 		conn.Write(out)
 	}
 }
@@ -96,12 +96,6 @@ func SessionWriter(messages chan []string, conn net.Conn) {
 //SessionListener handles all incoming messages from a client
 //and parses them for commands before passing it to the writer
 func SessionListener(messages chan []string, conn net.Conn, ConnSignal chan string) {
-	host, err := os.Hostname()
-	if err != nil {
-		fmt.Println(err)
-		log.Fatal(err)
-	}
-
 	for {
 		buf := make([]byte, 1024)
 
@@ -110,7 +104,7 @@ func SessionListener(messages chan []string, conn net.Conn, ConnSignal chan stri
 		if err != nil {
 			fmt.Println(err)
 			conn.Write([]byte("Timeout Error, No Signal. Disconnecting. \n" + string('\u0007')))
-			logfile.Write([]byte("Timeout Error, No Signal. Disconnecting. \n" + string('\u0007')))
+			Write([]byte("Timeout Error, No Signal. Disconnecting."), conn.LocalAddr().String(), conn.RemoteAddr().String(), conn.LocalAddr().String())
 			break
 		}
 
@@ -125,7 +119,7 @@ func SessionListener(messages chan []string, conn net.Conn, ConnSignal chan stri
 		command := strings.TrimSpace(string(buf))
 		commandSlice := strings.Split(command, " ")
 
-		logfile.Write([]byte("Raw Text Received From " + host + ": " + string(buf)))
+		Write(buf, conn.RemoteAddr().String(), conn.LocalAddr().String(), conn.LocalAddr().String())
 
 		switch string(buf) {
 
@@ -156,7 +150,18 @@ func SessionListener(messages chan []string, conn net.Conn, ConnSignal chan stri
 //Ping pings the connection
 func Ping(conn net.Conn) {
 	for {
-		conn.Write([]byte("ping\n"))
+		conn.Write([]byte("ping"))
 		time.Sleep(20 * time.Second)
 	}
+}
+
+var mu = &sync.Mutex{}
+
+//Write writes to a logfile
+func Write(info []byte, In string, Out string, WhoAmI string) {
+	//Build complete String
+	FullString := WhoAmI + ", " + In + ", " + Out + ", " + string(info) + "\n"
+	mu.Lock()
+	defer mu.Unlock()
+	logfile.Write([]byte(FullString))
 }

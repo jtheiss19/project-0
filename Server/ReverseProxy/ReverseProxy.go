@@ -14,15 +14,8 @@ import (
 var Power bool = true
 var backendServers map[string]string = make(map[string]string)
 var shutdownchan chan string
-var logfile *os.File
 
 func main() {
-	var err error
-	logfile, err = os.OpenFile("log.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0777)
-	if err != nil {
-		fmt.Println(err)
-	}
-
 	go StartReverseProxy("8081")
 
 	go GrabServers()
@@ -33,12 +26,10 @@ func main() {
 //client to server application
 func StartReverseProxy(port string) {
 	fmt.Println("Launching Reverse Proxy server...")
-	logfile.Write([]byte("Launching Reverse Proxy server...\n"))
 
 	ln, _ := net.Listen("tcp", ":"+port)
 
 	fmt.Println("Online - Now Listening On Port: " + port)
-	logfile.Write([]byte("Online - Now Listening On Port: " + port + "\n"))
 
 	fmt.Println()
 
@@ -47,11 +38,9 @@ func StartReverseProxy(port string) {
 	for Power {
 
 		go Session(ln, ConnSignal, port)
-		logfile.Write([]byte(<-ConnSignal))
+		<-ConnSignal
 
 	}
-
-	logfile.Write([]byte("Shut Down Signal Sent...Ending \n"))
 
 }
 
@@ -102,18 +91,8 @@ func SessionListener(Conn1 net.Conn, messages chan string) {
 		if err != nil {
 			fmt.Println(err)
 			Conn1.Write([]byte("Timeout Error, No Signal. Disconnecting. \n"))
-			logfile.Write([]byte("Timeout Error, No Signal. Disconnecting. \n"))
 			break
 		}
-
-		var temp []byte
-		for i := 0; i < len(buf); i++ {
-			if buf[i] == byte('\u0000') {
-				temp = append(buf[0:i])
-				break
-			}
-		}
-		logfile.Write([]byte("Recieved message: " + string(temp) + "\n"))
 
 		messages <- string(buf)
 	}
@@ -123,7 +102,6 @@ func SessionListener(Conn1 net.Conn, messages chan string) {
 func SessionWriter(Conn1 net.Conn, messages chan string) {
 	for {
 		NewMessage := <-messages
-		logfile.Write([]byte("Sent message: " + NewMessage + "\n"))
 		Conn1.Write([]byte(NewMessage))
 	}
 }

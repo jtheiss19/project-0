@@ -22,7 +22,7 @@ func main() {
 		}
 	}
 	defer conn.Close()
-	fmt.Println("Made connection on port 8080")
+	fmt.Println("Made connection on port 8081")
 	conn.Write([]byte("Client"))
 	go Writer(conn)
 	go Ping(conn)
@@ -65,7 +65,7 @@ func Writer(conn net.Conn) {
 //Ping pings the connection
 func Ping(conn net.Conn) {
 	for {
-		conn.Write([]byte("ping\n"))
+		conn.Write([]byte("ping"))
 		time.Sleep(20 * time.Second)
 	}
 }
