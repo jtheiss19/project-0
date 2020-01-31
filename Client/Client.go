@@ -14,8 +14,15 @@ func main() {
 	var conn net.Conn
 	var err error
 
+	fmt.Println("Enter the address of the server to connect to")
+
+	reader := bufio.NewReader(os.Stdin)
+	text, _ := reader.ReadString('\n')
+	text = strings.TrimRight(string(text), " \n")
+	text = strings.TrimSpace(string(text))
+
 	for {
-		conn, err = net.Dial("tcp", "127.0.0.1:8081")
+		conn, err = net.Dial("tcp", text)
 
 		if err == nil {
 			break
@@ -33,7 +40,7 @@ func main() {
 //Listener listens for a server response
 func Listener(conn net.Conn) {
 	for {
-		buf := make([]byte, 2048)
+		buf := make([]byte, 1024)
 
 		conn.SetReadDeadline(time.Now().Add(30 * time.Second))
 		_, err := conn.Read(buf)
@@ -46,6 +53,7 @@ func Listener(conn net.Conn) {
 		if strings.Contains(message, string('\u0007')) {
 			fmt.Print(message)
 			os.Exit(0)
+		} else if strings.Contains(message, "ping") {
 		} else {
 			fmt.Print(message)
 		}

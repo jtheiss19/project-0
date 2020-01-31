@@ -4,16 +4,61 @@ import (
 	"bufio"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"os"
 	"strings"
-	"time"
+	"sync"
 )
 
+var ConnSignal chan string = make(chan string)
+
 func main() {
+
+	fmt.Println("Launching Logging Server...")
+
+	ln, _ := net.Listen("tcp", ":8070")
+
+	fmt.Println("Online - Listening on port 8070")
+
 	for {
-		UpdateLog("../..")
-		time.Sleep(10 * time.Second)
+		go Session(ln, "8070")
+		<-ConnSignal
 	}
+	/*
+		for {
+			UpdateLog("../..")
+			time.Sleep(10 * time.Second)
+		}
+	*/
+}
+
+func Session(ln net.Listener, port string) {
+	conn, _ := ln.Accept()
+	defer conn.Close()
+
+	logfile, err := os.OpenFile("log_"+conn.RemoteAddr().String()+".txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0777)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println("New Connection On")
+	Write([]byte("New Connection"), conn.LocalAddr().String(), "N/A", conn.LocalAddr().String(), logfile)
+	ConnSignal <- "New Connection"
+
+	for {
+		buf := make([]byte, 1024)
+		conn.Read(buf)
+		for i := 0; i < len(buf); i++ {
+			if buf[i] == byte('\u0000') {
+				buf = append(buf[0:i])
+				break
+			}
+		}
+		if string(buf) != "" {
+			logfile.Write(buf)
+		}
+	}
+
 }
 
 //RecursiveCompile serches through all non hidden files
@@ -71,4 +116,13 @@ func UpdateLog(FilePath string) {
 
 	w.Flush()
 
+}
+
+var mu = &sync.Mutex{}
+
+//Write writes to a logfile
+func Write(info []byte, In string, Out string, WhoAmI string, file *os.File) {
+	//Build complete String
+	FullString := WhoAmI + ", " + In + ", " + Out + ", " + string(info) + "\n"
+	file.Write([]byte(FullString))
 }

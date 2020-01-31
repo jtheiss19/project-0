@@ -1,5 +1,6 @@
 main
 Client
 LoadBalancer
+LoggingNode
 ReverseProxy
 log.txt

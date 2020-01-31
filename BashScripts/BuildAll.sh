@@ -11,4 +11,7 @@ cd ..
 cd ReverseProxy
 go build ReverseProxy.go
 cd ..
+cd LoggingNode
+go build LoggingNode.go
+cd ..
 cd ..

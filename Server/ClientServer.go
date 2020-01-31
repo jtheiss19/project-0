@@ -48,6 +48,7 @@ func StartClientServer(port string) {
 
 	for i := 0; i < len(connections); i++ {
 		connections[i].Write([]byte("Server is shutting down, Disconnecting you" + string('\u0007') + "\n"))
+		Write([]byte("Server is shutting down, Disconnecting you"+string('\u0007')), connections[i].LocalAddr().String(), connections[i].RemoteAddr().String(), connections[i].LocalAddr().String())
 	}
 	Write([]byte("Shut Down Signal Sent...Ending"), "N/A", "N/A", port)
 }

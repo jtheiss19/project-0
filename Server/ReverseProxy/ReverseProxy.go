@@ -14,10 +14,10 @@ import (
 var Power bool = true
 var backendServers map[string]string = make(map[string]string)
 var shutdownchan chan string
+var logConn net.Conn
 
 func main() {
-	go StartReverseProxy("8081")
-
+	fmt.Println("Reverse Proxy Server Terminal")
 	go GrabServers()
 	<-shutdownchan
 }
@@ -74,16 +74,18 @@ func Session(ln net.Listener, ConnSignal chan string, port string) {
 		}
 	}
 
+	Shutdown := make(chan string)
 	InboundMessages := make(chan string)
 	OutboundMessages := make(chan string)
-	go SessionWriter(conn, OutboundMessages)
-	go SessionWriter(serverConn, InboundMessages)
-	go SessionListener(serverConn, OutboundMessages)
-	SessionListener(conn, InboundMessages)
+	go SessionWriter(conn, OutboundMessages, Shutdown)
+	go SessionWriter(serverConn, InboundMessages, Shutdown)
+	go SessionListener(serverConn, OutboundMessages, Shutdown)
+	go SessionListener(conn, InboundMessages, Shutdown)
+	<-Shutdown
 }
 
 //SessionListener listens for connections noise and sends it to the writer
-func SessionListener(Conn1 net.Conn, messages chan string) {
+func SessionListener(Conn1 net.Conn, messages chan string, shutdown chan string) {
 	for {
 		buf := make([]byte, 1024)
 		Conn1.SetReadDeadline(time.Now().Add(30 * time.Second))
@@ -94,14 +96,24 @@ func SessionListener(Conn1 net.Conn, messages chan string) {
 			break
 		}
 
+		if logConn != nil {
+			logConn.Write(buf)
+		}
+
 		messages <- string(buf)
 	}
+	shutdown <- "Session Closed"
 }
 
 //SessionWriter listens for messages channel and sends it to the correct server
-func SessionWriter(Conn1 net.Conn, messages chan string) {
+func SessionWriter(Conn1 net.Conn, messages chan string, shutdown chan string) {
 	for {
 		NewMessage := <-messages
+
+		if logConn != nil {
+			logConn.Write([]byte(NewMessage))
+		}
+
 		Conn1.Write([]byte(NewMessage))
 	}
 }
@@ -134,6 +146,29 @@ func GrabServers() {
 			servertype := text
 
 			backendServers[servertype] = conn
+
+		case "Log":
+			fmt.Println("Grab logging server By Entering in a full address such as Host:Port")
+
+			reader := bufio.NewReader(os.Stdin)
+			text, _ := reader.ReadString('\n')
+			text = strings.TrimRight(string(text), " \n")
+			text = strings.TrimSpace(string(text))
+
+			conn, _ := net.Dial("tcp", text)
+
+			logConn = conn
+
+		case "Launch":
+			fmt.Println("Enter in a port")
+
+			reader := bufio.NewReader(os.Stdin)
+			text, _ := reader.ReadString('\n')
+			text = strings.TrimRight(string(text), " \n")
+			text = strings.TrimSpace(string(text))
+
+			go StartReverseProxy(text)
+
 		}
 	}
 
