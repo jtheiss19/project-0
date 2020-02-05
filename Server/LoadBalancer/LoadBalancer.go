@@ -16,6 +16,7 @@ var Power bool = true
 var connectionsPerServer map[string]int = make(map[string]int)
 var shutdownchan chan string
 var logConn net.Conn
+var port string
 
 func main() {
 	fmt.Println("Load Balancer Terminal")
@@ -75,7 +76,9 @@ func Session(ln net.Listener, ConnSignal chan string, port string) {
 	for i := 0; i < 10; i++ {
 		for k, v := range connectionsPerServer {
 			if valueToLookfor == v {
+
 				serverConn, err = net.Dial("tcp", k)
+
 				if err != nil {
 					fmt.Println(k)
 					fmt.Println("Server Not Responding with Error, Removing from list")
@@ -88,12 +91,13 @@ func Session(ln net.Listener, ConnSignal chan string, port string) {
 					}
 					connectionsPerServer = temp
 					return
-				} else {
-					defer serverConn.Close()
-					serverConn.Write(buf)
-					connectionsPerServer[k]++
-					break
 				}
+
+				defer serverConn.Close()
+				serverConn.Write(buf)
+				connectionsPerServer[k]++
+				break
+
 			}
 		}
 		if serverConn != nil {
@@ -102,8 +106,8 @@ func Session(ln net.Listener, ConnSignal chan string, port string) {
 	}
 
 	Shutdown := make(chan string)
-	InboundMessages := make(chan string)
-	OutboundMessages := make(chan string)
+	InboundMessages := make(chan []byte)
+	OutboundMessages := make(chan []byte)
 	go SessionWriter(conn, OutboundMessages, Shutdown)
 	go SessionWriter(serverConn, InboundMessages, Shutdown)
 	go SessionListener(serverConn, OutboundMessages, Shutdown)
@@ -114,7 +118,7 @@ func Session(ln net.Listener, ConnSignal chan string, port string) {
 }
 
 //SessionListener listens for connections noise and sends it to the writer
-func SessionListener(Conn1 net.Conn, messages chan string, shutdown chan string) {
+func SessionListener(Conn1 net.Conn, messages chan []byte, shutdown chan string) {
 	for {
 		buf := make([]byte, 1024)
 		Conn1.SetReadDeadline(time.Now().Add(30 * time.Second))
@@ -126,24 +130,38 @@ func SessionListener(Conn1 net.Conn, messages chan string, shutdown chan string)
 		}
 
 		if logConn != nil {
+			var logfile []byte
+			if strings.Contains(Conn1.RemoteAddr().String(), port) {
+				logfile = []byte("In <" + Conn1.LocalAddr().String() + ">\n")
+			} else {
+				logfile = []byte("In <" + Conn1.RemoteAddr().String() + ">\n")
+			}
+			logConn.Write(logfile)
 			logConn.Write(buf)
 		}
 
-		messages <- string(buf)
+		messages <- buf
 	}
 	shutdown <- "Close Session"
 }
 
 //SessionWriter listens for messages channel and sends it to the correct server
-func SessionWriter(Conn1 net.Conn, messages chan string, shutdown chan string) {
+func SessionWriter(Conn1 net.Conn, messages chan []byte, shutdown chan string) {
 	for {
 		NewMessage := <-messages
 
 		if logConn != nil {
-			logConn.Write([]byte(NewMessage))
+			var logfile []byte
+			if strings.Contains(Conn1.RemoteAddr().String(), port) {
+				logfile = []byte("OUT <" + Conn1.LocalAddr().String() + ">\n")
+			} else {
+				logfile = []byte("OUT <" + Conn1.RemoteAddr().String() + ">\n")
+			}
+			logConn.Write(logfile)
+			logConn.Write(NewMessage)
 		}
 
-		Conn1.Write([]byte(NewMessage))
+		Conn1.Write(NewMessage)
 	}
 }
 
@@ -177,7 +195,6 @@ func GrabServers() {
 			text = strings.TrimSpace(string(text))
 
 			conn, _ := net.Dial("tcp", text)
-
 			logConn = conn
 
 		case "Launch":
@@ -188,8 +205,25 @@ func GrabServers() {
 			text = strings.TrimRight(string(text), " \n")
 			text = strings.TrimSpace(string(text))
 
+			port = text
+
 			go StartLoadBalancer(text)
 
+		case "Remove":
+			fmt.Println("Remove Server By Entering in a full address such as Host:Port")
+
+			reader := bufio.NewReader(os.Stdin)
+			text, _ := reader.ReadString('\n')
+			text = strings.TrimRight(string(text), " \n")
+			text = strings.TrimSpace(string(text))
+
+			temp := make(map[string]int)
+			for k, v := range connectionsPerServer {
+				if k != text {
+					temp[k] = v
+				}
+			}
+			connectionsPerServer = temp
 		}
 
 	}

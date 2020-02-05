@@ -7,7 +7,6 @@ import (
 	"net"
 	"os"
 	"strings"
-	"sync"
 )
 
 var ConnSignal chan string = make(chan string)
@@ -24,12 +23,6 @@ func main() {
 		go Session(ln, "8070")
 		<-ConnSignal
 	}
-	/*
-		for {
-			UpdateLog("../..")
-			time.Sleep(10 * time.Second)
-		}
-	*/
 }
 
 func Session(ln net.Listener, port string) {
@@ -41,22 +34,26 @@ func Session(ln net.Listener, port string) {
 		fmt.Println(err)
 	}
 
-	fmt.Println("New Connection On")
-	Write([]byte("New Connection"), conn.LocalAddr().String(), "N/A", conn.LocalAddr().String(), logfile)
+	fmt.Println("New Connection")
+	logfile.Write([]byte("New Connection \n"))
 	ConnSignal <- "New Connection"
 
 	for {
 		buf := make([]byte, 1024)
 		conn.Read(buf)
-		for i := 0; i < len(buf); i++ {
-			if buf[i] == byte('\u0000') {
-				buf = append(buf[0:i])
-				break
+		var temp []byte
+		for _, v := range buf {
+			if v != '\u0000' {
+				temp = append(temp, v)
 			}
 		}
+		buf = temp
 		if string(buf) != "" {
-			logfile.Write(buf)
+			logfile.Write(append(buf, '\n'))
+		} else {
+			conn.Close()
 		}
+
 	}
 
 }
@@ -116,13 +113,4 @@ func UpdateLog(FilePath string) {
 
 	w.Flush()
 
-}
-
-var mu = &sync.Mutex{}
-
-//Write writes to a logfile
-func Write(info []byte, In string, Out string, WhoAmI string, file *os.File) {
-	//Build complete String
-	FullString := WhoAmI + ", " + In + ", " + Out + ", " + string(info) + "\n"
-	file.Write([]byte(FullString))
 }

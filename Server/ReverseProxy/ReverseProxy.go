@@ -15,6 +15,7 @@ var Power bool = true
 var backendServers map[string]string = make(map[string]string)
 var shutdownchan chan string
 var logConn net.Conn
+var port string
 
 func main() {
 	fmt.Println("Reverse Proxy Server Terminal")
@@ -75,8 +76,8 @@ func Session(ln net.Listener, ConnSignal chan string, port string) {
 	}
 
 	Shutdown := make(chan string)
-	InboundMessages := make(chan string)
-	OutboundMessages := make(chan string)
+	InboundMessages := make(chan []byte)
+	OutboundMessages := make(chan []byte)
 	go SessionWriter(conn, OutboundMessages, Shutdown)
 	go SessionWriter(serverConn, InboundMessages, Shutdown)
 	go SessionListener(serverConn, OutboundMessages, Shutdown)
@@ -85,7 +86,7 @@ func Session(ln net.Listener, ConnSignal chan string, port string) {
 }
 
 //SessionListener listens for connections noise and sends it to the writer
-func SessionListener(Conn1 net.Conn, messages chan string, shutdown chan string) {
+func SessionListener(Conn1 net.Conn, messages chan []byte, shutdown chan string) {
 	for {
 		buf := make([]byte, 1024)
 		Conn1.SetReadDeadline(time.Now().Add(30 * time.Second))
@@ -97,24 +98,38 @@ func SessionListener(Conn1 net.Conn, messages chan string, shutdown chan string)
 		}
 
 		if logConn != nil {
+			var logfile []byte
+			if strings.Contains(Conn1.RemoteAddr().String(), port) {
+				logfile = []byte("In <" + Conn1.LocalAddr().String() + ">\n")
+			} else {
+				logfile = []byte("In <" + Conn1.RemoteAddr().String() + ">\n")
+			}
+			logConn.Write(logfile)
 			logConn.Write(buf)
 		}
 
-		messages <- string(buf)
+		messages <- buf
 	}
 	shutdown <- "Session Closed"
 }
 
 //SessionWriter listens for messages channel and sends it to the correct server
-func SessionWriter(Conn1 net.Conn, messages chan string, shutdown chan string) {
+func SessionWriter(Conn1 net.Conn, messages chan []byte, shutdown chan string) {
 	for {
 		NewMessage := <-messages
 
 		if logConn != nil {
-			logConn.Write([]byte(NewMessage))
+			var logfile []byte
+			if strings.Contains(Conn1.RemoteAddr().String(), port) {
+				logfile = []byte("OUT <" + Conn1.LocalAddr().String() + ">\n")
+			} else {
+				logfile = []byte("OUT <" + Conn1.RemoteAddr().String() + ">\n")
+			}
+			logConn.Write(logfile)
+			logConn.Write(NewMessage)
 		}
 
-		Conn1.Write([]byte(NewMessage))
+		Conn1.Write(NewMessage)
 	}
 }
 
@@ -156,7 +171,7 @@ func GrabServers() {
 			text = strings.TrimSpace(string(text))
 
 			conn, _ := net.Dial("tcp", text)
-
+			conn.Write([]byte(conn.LocalAddr().String()))
 			logConn = conn
 
 		case "Launch":
@@ -167,7 +182,25 @@ func GrabServers() {
 			text = strings.TrimRight(string(text), " \n")
 			text = strings.TrimSpace(string(text))
 
+			port = text
+
 			go StartReverseProxy(text)
+
+		case "Remove":
+			fmt.Println("Remove Server By Entering in a full address such as Host:Port")
+
+			reader := bufio.NewReader(os.Stdin)
+			text, _ := reader.ReadString('\n')
+			text = strings.TrimRight(string(text), " \n")
+			text = strings.TrimSpace(string(text))
+
+			temp := make(map[string]string)
+			for k, v := range backendServers {
+				if v != text {
+					temp[k] = v
+				}
+			}
+			backendServers = temp
 
 		}
 	}
