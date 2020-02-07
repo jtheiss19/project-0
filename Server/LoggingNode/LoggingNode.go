@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net"
 	"os"
 	"strings"
@@ -15,12 +16,12 @@ func main() {
 
 	fmt.Println("Launching Logging Server...")
 
-	ln, _ := net.Listen("tcp", ":8070")
+	ln, _ := net.Listen("tcp", ":8080")
 
-	fmt.Println("Online - Listening on port 8070")
+	fmt.Println("Online - Listening on port 8080")
 
 	for {
-		go Session(ln, "8070")
+		go Session(ln, "8080")
 		<-ConnSignal
 	}
 }
@@ -49,7 +50,8 @@ func Session(ln net.Listener, port string) {
 		}
 		buf = temp
 		if string(buf) != "" {
-			logfile.Write(append(buf, '\n'))
+			log.SetOutput(logfile)
+			log.Println(string(append(buf, '\n', '\n')))
 		} else {
 			conn.Close()
 		}

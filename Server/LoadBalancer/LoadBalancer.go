@@ -136,8 +136,7 @@ func SessionListener(Conn1 net.Conn, messages chan []byte, shutdown chan string)
 			} else {
 				logfile = []byte("In <" + Conn1.RemoteAddr().String() + ">\n")
 			}
-			logConn.Write(logfile)
-			logConn.Write(buf)
+			logConn.Write(append(logfile, buf...))
 		}
 
 		messages <- buf
@@ -157,8 +156,7 @@ func SessionWriter(Conn1 net.Conn, messages chan []byte, shutdown chan string) {
 			} else {
 				logfile = []byte("OUT <" + Conn1.RemoteAddr().String() + ">\n")
 			}
-			logConn.Write(logfile)
-			logConn.Write(NewMessage)
+			logConn.Write(append(logfile, NewMessage...))
 		}
 
 		Conn1.Write(NewMessage)
